@@ -55,10 +55,35 @@ Não alterar componentes não relacionados sem necessidade.
     deployment, modelo de template clonado).
   - ✅ Seed em `supabase/seed.sql`: linha única de `business_settings` e os 8
     serviços iniciais com preço/duração placeholder.
-  - ⏳ Pendente: aplicar essas migrations no projeto Supabase real (`.env.local`
-    já criado, ainda com `NEXT_PUBLIC_SUPABASE_URL` e
-    `NEXT_PUBLIC_SUPABASE_ANON_KEY` vazios — preencher quando formos rodar isso),
-    autenticação admin via Supabase Auth, esqueleto do painel protegido.
+  - ✅ Autenticação admin via Supabase Auth (`@supabase/ssr`): clientes em
+    `src/lib/supabase/{client,server,proxy}.ts`, login por email/senha em
+    `src/app/admin/(auth)/login`, guarda de rota em `src/proxy.ts` +
+    `src/app/admin/(painel)/layout.tsx` (dupla camada). Como só existe 1
+    profissional, qualquer usuário autenticado no Supabase Auth é admin — sem
+    tabela de papéis. **O usuário admin precisa ser criado manualmente no painel
+    do Supabase (Authentication → Users → Add user)**, não há fluxo de cadastro.
+  - ✅ Esqueleto de navegação do painel em `src/app/admin/(painel)/` — Dashboard,
+    Agenda, Clientes, Serviços, Galeria, Financeiro, Configurações, todas como
+    placeholder "Em construção — Fase 4".
+  - ⏳ Pendente: aplicar as migrations no projeto Supabase real e testar o login
+    de verdade (bloqueado agora pela `NEXT_PUBLIC_SUPABASE_URL` — ver nota
+    abaixo).
+
+### ⚠️ `.env.local` — URL do Supabase suspeita
+
+`NEXT_PUBLIC_SUPABASE_URL` foi preenchida como `https://sjtvtxufudqetwoalvjl.supabase.com`.
+Domínio de projeto Supabase é `.supabase.co`, não `.supabase.com` (esse é o site
+institucional da empresa). Provavelmente um typo — confirmar com o usuário e
+corrigir antes de testar login/dados reais.
+
+### ⚠️ Next.js 16: `middleware` foi renomeado para `proxy`
+
+Nesta versão (16.3.3) o arquivo de convenção `middleware.ts`/`export function
+middleware` foi descontinuado e renomeado para `proxy.ts`/`export function
+proxy` (mesmo comportamento, roda sempre em runtime Node.js, não Edge). Usar
+`proxy.ts` na raiz de `src/`, não `middleware.ts`. Ver
+`node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`
+antes de mexer nisso de novo.
 - **Fase 2 — Site público (estrutura):** Navbar, Hero (estática), Serviços,
   Galeria, Sobre, Contato — já puxando dados reais do banco, sem agendamento.
 - **Fase 3 — Agendamento:** fluxo completo do cliente + link WhatsApp pré-preenchido
