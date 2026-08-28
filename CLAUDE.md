@@ -40,16 +40,25 @@ Não alterar componentes não relacionados sem necessidade.
 
 ## Fases
 
-- **Fase 0 — Fundação** ✅ em andamento: git local, scaffold Next.js + TypeScript +
-  Tailwind + ESLint, tokens de cor da logo, `.env.local.example`. Pendente do
-  usuário: criar conta/projeto Supabase e conta Vercel (requerem login
-  interativo, fora do alcance do agente).
-- **Fase 1 — Backend/dados:** schema completo (`business_settings`, `services`,
-  `clients`, `appointments`, `blocked_slots`, `gallery_photos`, `transactions`) +
-  RLS, seed de serviços com preços/duração marcados como placeholder, autenticação
-  admin via Supabase Auth, esqueleto do painel protegido. Conflito de horário via
-  constraint `EXCLUDE` do Postgres (`tstzrange` + `btree_gist`), não só validação
-  na aplicação.
+- **Fase 0 — Fundação** ✅ concluída: git local, scaffold Next.js + TypeScript +
+  Tailwind + ESLint, tokens de cor da logo, `.env.local.example`. Contas do
+  Supabase e da Vercel já criadas manualmente pelo usuário (login interativo,
+  fora do alcance do agente).
+- **Fase 1 — Backend/dados** 🔄 em andamento:
+  - ✅ Schema completo em `supabase/migrations/20260828120000_schema_fase1.sql`
+    (`business_settings`, `services`, `clients`, `appointments`, `blocked_slots`,
+    `gallery_photos`, `transactions`) + RLS por tabela. Conflito de horário via
+    constraint `EXCLUDE` do Postgres (`tstzrange`) em `appointments` e
+    `blocked_slots` — **não** precisou da extensão `btree_gist`: só é necessária
+    para combinar igualdade de outra coluna no mesmo índice GiST (ex.: múltiplos
+    profissionais na mesma tabela), o que não se aplica aqui (1 profissional por
+    deployment, modelo de template clonado).
+  - ✅ Seed em `supabase/seed.sql`: linha única de `business_settings` e os 8
+    serviços iniciais com preço/duração placeholder.
+  - ⏳ Pendente: aplicar essas migrations no projeto Supabase real (`.env.local`
+    já criado, ainda com `NEXT_PUBLIC_SUPABASE_URL` e
+    `NEXT_PUBLIC_SUPABASE_ANON_KEY` vazios — preencher quando formos rodar isso),
+    autenticação admin via Supabase Auth, esqueleto do painel protegido.
 - **Fase 2 — Site público (estrutura):** Navbar, Hero (estática), Serviços,
   Galeria, Sobre, Contato — já puxando dados reais do banco, sem agendamento.
 - **Fase 3 — Agendamento:** fluxo completo do cliente + link WhatsApp pré-preenchido
