@@ -35,3 +35,30 @@ export interface GalleryPhoto {
   url: string;
   category: string | null;
 }
+
+export type AppointmentStatus = "pending" | "confirmed" | "cancelled";
+
+export interface AdminAppointment {
+  id: string;
+  starts_at: string;
+  ends_at: string;
+  status: AppointmentStatus;
+  notes: string | null;
+  client: { id: string; name: string; whatsapp: string | null } | null;
+  service: { id: string; name: string } | null;
+}
+
+export interface AdminBlockedSlot {
+  id: string;
+  starts_at: string;
+  ends_at: string;
+  reason: string | null;
+}
+
+export interface AdminClient {
+  id: string;
+  name: string;
+  whatsapp: string | null;
+  notes: string | null;
+  created_at: string;
+}

@@ -1,5 +1,5 @@
 import { createClient } from "./server";
-import type { AdminService } from "./types";
+import type { AdminAppointment, AdminBlockedSlot, AdminService } from "./types";
 
 // Leituras administrativas: exigem sessão autenticada (RLS via policies
 // "_admin_all"). Usar só dentro de src/app/admin/**.
@@ -15,6 +15,48 @@ export async function getAllServices(): Promise<AdminService[]> {
 
   if (error) {
     console.error("Erro ao buscar services (admin):", error.message);
+    return [];
+  }
+
+  return data;
+}
+
+export async function getAppointmentsForRange(
+  fromISO: string,
+  toISO: string,
+): Promise<AdminAppointment[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("appointments")
+    .select(
+      "id, starts_at, ends_at, status, notes, client:clients(id, name, whatsapp), service:services(id, name)",
+    )
+    .lt("starts_at", toISO)
+    .gt("ends_at", fromISO)
+    .order("starts_at", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao buscar appointments (admin):", error.message);
+    return [];
+  }
+
+  return data as unknown as AdminAppointment[];
+}
+
+export async function getBlockedSlotsForRange(
+  fromISO: string,
+  toISO: string,
+): Promise<AdminBlockedSlot[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("blocked_slots")
+    .select("id, starts_at, ends_at, reason")
+    .lt("starts_at", toISO)
+    .gt("ends_at", fromISO)
+    .order("starts_at", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao buscar blocked_slots (admin):", error.message);
     return [];
   }
 
