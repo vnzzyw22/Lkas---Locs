@@ -5,6 +5,7 @@ import type {
   AdminClient,
   AdminGalleryPhoto,
   AdminService,
+  AdminTransaction,
 } from "./types";
 
 // Leituras administrativas: exigem sessão autenticada (RLS via policies
@@ -93,6 +94,26 @@ export async function getAllGalleryPhotos(): Promise<AdminGalleryPhoto[]> {
 
   if (error) {
     console.error("Erro ao buscar gallery_photos (admin):", error.message);
+    return [];
+  }
+
+  return data;
+}
+
+export async function getTransactionsForRange(
+  fromDateISO: string,
+  toDateISO: string,
+): Promise<AdminTransaction[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("id, type, category, amount, description, occurred_at")
+    .gte("occurred_at", fromDateISO)
+    .lte("occurred_at", toDateISO)
+    .order("occurred_at", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao buscar transactions (admin):", error.message);
     return [];
   }
 

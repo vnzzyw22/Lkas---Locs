@@ -67,3 +67,14 @@ export interface AdminClient {
   notes: string | null;
   created_at: string;
 }
+
+export type TransactionType = "income" | "expense";
+
+export interface AdminTransaction {
+  id: string;
+  type: TransactionType;
+  category: string | null;
+  amount: number;
+  description: string | null;
+  occurred_at: string;
+}
