@@ -1,5 +1,10 @@
 import { createClient } from "./server";
-import type { AdminAppointment, AdminBlockedSlot, AdminService } from "./types";
+import type {
+  AdminAppointment,
+  AdminBlockedSlot,
+  AdminClient,
+  AdminService,
+} from "./types";
 
 // Leituras administrativas: exigem sessão autenticada (RLS via policies
 // "_admin_all"). Usar só dentro de src/app/admin/**.
@@ -57,6 +62,21 @@ export async function getBlockedSlotsForRange(
 
   if (error) {
     console.error("Erro ao buscar blocked_slots (admin):", error.message);
+    return [];
+  }
+
+  return data;
+}
+
+export async function getAllClients(): Promise<AdminClient[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("clients")
+    .select("id, name, whatsapp, notes, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao buscar clients (admin):", error.message);
     return [];
   }
 
