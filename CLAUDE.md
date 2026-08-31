@@ -44,7 +44,7 @@ Não alterar componentes não relacionados sem necessidade.
   Tailwind + ESLint, tokens de cor da logo, `.env.local.example`. Contas do
   Supabase e da Vercel já criadas manualmente pelo usuário (login interativo,
   fora do alcance do agente).
-- **Fase 1 — Backend/dados** 🔄 em andamento:
+- **Fase 1 — Backend/dados** ✅ concluída:
   - ✅ Schema completo em `supabase/migrations/20260828120000_schema_fase1.sql`
     (`business_settings`, `services`, `clients`, `appointments`, `blocked_slots`,
     `gallery_photos`, `transactions`) + RLS por tabela. Conflito de horário via
@@ -65,16 +65,15 @@ Não alterar componentes não relacionados sem necessidade.
   - ✅ Esqueleto de navegação do painel em `src/app/admin/(painel)/` — Dashboard,
     Agenda, Clientes, Serviços, Galeria, Financeiro, Configurações, todas como
     placeholder "Em construção — Fase 4".
-  - ⏳ Pendente: aplicar as migrations no projeto Supabase real e testar o login
-    de verdade (bloqueado agora pela `NEXT_PUBLIC_SUPABASE_URL` — ver nota
-    abaixo).
-
-### ⚠️ `.env.local` — URL do Supabase suspeita
-
-`NEXT_PUBLIC_SUPABASE_URL` foi preenchida como `https://sjtvtxufudqetwoalvjl.supabase.com`.
-Domínio de projeto Supabase é `.supabase.co`, não `.supabase.com` (esse é o site
-institucional da empresa). Provavelmente um typo — confirmar com o usuário e
-corrigir antes de testar login/dados reais.
+  - ✅ `NEXT_PUBLIC_SUPABASE_URL` corrigida para `https://sjtvtxufudqetwoalvjl.supabase.co`
+    (estava com typo `.supabase.com`, domínio institucional da empresa, não o do
+    projeto).
+  - ✅ Migration `20260828120000_schema_fase1.sql` e `supabase/seed.sql` aplicadas
+    no projeto Supabase real via `supabase db push` (CLI vinculado com
+    `supabase link --project-ref sjtvtxufudqetwoalvjl`).
+  - ✅ Login do admin testado de ponta a ponta em `/admin/login` com sucesso —
+    guarda de rota redireciona corretamente para o painel, que mostra os
+    placeholders "Em construção — Fase 4" (esperado, conteúdo real só na Fase 4).
 
 ### ⚠️ Next.js 16: `middleware` foi renomeado para `proxy`
 
