@@ -5,17 +5,17 @@ import { motion } from "framer-motion";
 // Decalque desenhado à mão (street/fashion sketch) de locs/twists —
 // nunca rosto, personagem ou clipart, ver PRODUCT.md > Brand Commitments.
 //
-// v3: cada loc é uma "fita" preenchida (silhueta), larga no topo e
-// afunilando até a ponta embaixo — não uma linha fina aberta. Referência
-// do cliente (public/imagens/exemplo-decalque.png): mechas grossas,
-// silhueta sólida, pontas em bico. Geradas parametricamente (centerline
-// senoidal sutil + largura decrescente, offset lateral pela normal da
-// curva — igual a um "stroke de largura variável" desenhado manualmente
-// como polígono fechado), determinístico por índice — sem Math.random,
-// pra não divergir entre SSR e cliente. "Reveladas" via framer-motion
-// (fade + leve escala) ao montar — silhuetas preenchidas não têm um
-// traçado de contorno único pra animar como pathLength, então a entrada
-// é opacidade/escala, não desenho progressivo.
+// v4: composição compacta em "coroa" (as mechas nascem de uma região
+// estreita no topo e se abrem em leque ao descer, com comprimentos
+// variados) em vez da faixa espalhada pela largura toda da v3 — o
+// cliente pediu essa composição menor, ancorada ao lado do wordmark, ver
+// public/imagens/posição-que-deve-ficar-os-decalques-que-eu-adicionei.png.
+// Cada mecha continua sendo uma "fita" preenchida (silhueta) com
+// afunilamento e textura em nós ao longo do comprimento — técnica
+// mantida da v3, que já bateu com a referência do cliente
+// (public/imagens/exemplo-decalque*.png/jfif). Geradas parametricamente,
+// determinístico por índice (sem Math.random, pra não divergir entre
+// SSR e cliente). Entrada via framer-motion (fade + leve escala).
 
 interface HairDecalProps {
   className?: string;
@@ -50,28 +50,33 @@ function continuePath(points: Point[]) {
   return full.replace(/^M([\d.-]+),([\d.-]+)/, "L$1,$2");
 }
 
-function buildRibbon(index: number, width: number, height: number) {
-  const laneWidth = width / 5.2;
-  const centerX = laneWidth * (index + 0.7) + Math.sin(index * 2.1) * laneWidth * 0.2;
-  const drift = Math.cos(index * 1.6) * laneWidth * 0.22;
-  const wobbleFreq = 1.6 + (index % 3) * 0.4;
+function buildLoc(index: number, count: number, width: number, height: number) {
+  const spread = count > 1 ? (index - (count - 1) / 2) / ((count - 1) / 2) : 0; // -1..1
+
+  const crownX = width * 0.5;
+  const crownY = height * 0.02;
+  const startX = crownX + spread * width * 0.1 + Math.sin(index * 1.9) * width * 0.015;
+  const endXOffset = spread * width * 0.4 + Math.sin(index * 2.7) * width * 0.04;
+  const lengthFactor = 0.6 + 0.36 * ((Math.sin(index * 1.35) + 1) / 2);
+  const endY = height * lengthFactor;
+
+  const wobbleFreq = 2 + (index % 3);
   const wobblePhase = index * 1.7;
-  const wobbleAmp = laneWidth * 0.05; // ondulação pequena — "mão trêmula", não a tira toda
+  const wobbleAmp = width * 0.018;
 
   const cx = (t: number) =>
-    centerX + drift * t + Math.sin(t * Math.PI * wobbleFreq + wobblePhase) * wobbleAmp * t;
-  const cy = (t: number) => -height * 0.08 + height * 1.18 * t;
+    startX +
+    endXOffset * Math.pow(t, 0.8) +
+    Math.sin(t * Math.PI * wobbleFreq + wobblePhase) * wobbleAmp * t;
+  const cy = (t: number) => crownY + (endY - crownY) * t;
 
-  const topWidth = laneWidth * (0.34 + 0.08 * Math.cos(index * 1.3));
+  const topWidth = width * (0.1 + 0.02 * Math.cos(index * 1.3));
   const bumpFreq = 6 + (index % 3); // nós/segmentos ao longo da mecha
   const bumpPhase = index * 0.8;
-  // Taper geral + oscilação de largura — o "nó de corda" que aparece na
-  // referência do cliente (public/imagens/exemplo-decalque02.jfif), em
-  // vez de uma borda perfeitamente lisa.
   const widthAt = (t: number) =>
     topWidth *
-    Math.pow(1 - t, 0.7) *
-    (1 + 0.28 * Math.sin(t * bumpFreq * Math.PI * 2 + bumpPhase));
+    Math.pow(1 - t, 0.65) *
+    (1 + 0.26 * Math.sin(t * bumpFreq * Math.PI * 2 + bumpPhase));
 
   const dt = 0.001;
   const normalAt = (t: number): Point => {
@@ -83,7 +88,7 @@ function buildRibbon(index: number, width: number, height: number) {
     return [-dy / len, dx / len];
   };
 
-  const samples = 42;
+  const samples = 40;
   const left: Point[] = [];
   const right: Point[] = [];
 
@@ -98,25 +103,27 @@ function buildRibbon(index: number, width: number, height: number) {
   const rightReversed = [...right].reverse();
   const d = `${catmullRomPath(left)} ${continuePath(rightReversed)} Z`;
 
-  return { d, cx, cy };
+  return d;
 }
 
 export function HairDecal({
   className,
-  strandCount = 6,
-  width = 1400,
-  height = 300,
+  strandCount = 9,
+  width = 520,
+  height = 560,
 }: HairDecalProps) {
-  const ribbons = Array.from({ length: strandCount }, (_, i) => buildRibbon(i, width, height));
+  const locs = Array.from({ length: strandCount }, (_, i) =>
+    buildLoc(i, strandCount, width, height),
+  );
 
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
       className={className}
-      preserveAspectRatio="xMidYMax slice"
+      preserveAspectRatio="xMidYMin meet"
       aria-hidden="true"
     >
-      {ribbons.map((ribbon, i) => {
+      {locs.map((d, i) => {
         const isRed = i % 3 === 0;
         const fill = isRed ? "var(--color-brand-red)" : "var(--color-brand-cream)";
         const opacity = isRed ? 0.92 : 0.85;
@@ -124,14 +131,14 @@ export function HairDecal({
         return (
           <motion.path
             key={i}
-            d={ribbon.d}
+            d={d}
             fill={fill}
             opacity={opacity}
             initial={{ opacity: 0, scale: 0.85, y: -14 }}
             animate={{ opacity, scale: 1, y: 0 }}
             transition={{
               duration: 0.9,
-              delay: 0.4 + i * 0.1,
+              delay: 0.4 + i * 0.08,
               ease: [0.16, 1, 0.3, 1],
             }}
             style={{ transformOrigin: "50% 0%" }}

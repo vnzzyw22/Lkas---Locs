@@ -30,7 +30,6 @@ const fadeUp = {
 export function Hero({ business, photos }: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
-  const decalRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -42,15 +41,16 @@ export function Hero({ business, photos }: HeroProps) {
       gsap.registerPlugin(ScrollTrigger);
 
       const ctx = gsap.context(() => {
-        const scrollConfig = {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        };
-
-        gsap.to(bgRef.current, { yPercent: 18, ease: "none", scrollTrigger: scrollConfig });
-        gsap.to(decalRef.current, { yPercent: 40, ease: "none", scrollTrigger: scrollConfig });
+        gsap.to(bgRef.current, {
+          yPercent: 18,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
       }, sectionRef);
 
       cleanup = () => ctx.revert();
@@ -65,8 +65,6 @@ export function Hero({ business, photos }: HeroProps) {
       ref={sectionRef}
       className="relative bg-brand-ink text-brand-cream"
     >
-      {/* wrapper próprio com overflow-hidden: só o decalque, lá embaixo,
-          pode sangrar pra fora da Hero — o glow de fundo não. */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div
           ref={bgRef}
@@ -82,7 +80,7 @@ export function Hero({ business, photos }: HeroProps) {
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-20 mx-auto flex min-h-[100svh] max-w-[1500px] flex-col px-6 pt-20 pb-20 sm:px-10 sm:pt-24 lg:px-16"
+        className="relative z-20 mx-auto flex min-h-[74svh] max-w-[1500px] flex-col px-6 pt-10 pb-10 sm:min-h-[78svh] sm:px-10 sm:pt-12 lg:px-16"
       >
         <div className="flex items-start justify-between gap-6">
           <motion.p
@@ -99,7 +97,7 @@ export function Hero({ business, photos }: HeroProps) {
           />
         </div>
 
-        <div className="relative mt-8 mb-10 lg:mt-10 lg:mb-14">
+        <div className="relative mt-6 mb-6 lg:mt-8 lg:mb-8">
           <motion.h1
             variants={fadeUp}
             className="font-display leading-[0.82] font-black tracking-tight"
@@ -120,9 +118,18 @@ export function Hero({ business, photos }: HeroProps) {
           >
             {business?.address ?? "Maringá — PR"}
           </motion.p>
+
+          {/* decalque ancorado ao lado do "LOCS", ver
+              public/imagens/posição-que-deve-ficar-os-decalques-que-eu-adicionei.png */}
+          <motion.div
+            variants={fadeUp}
+            className="pointer-events-none absolute top-0 right-0 hidden w-36 sm:block sm:w-44 lg:w-60"
+          >
+            <HairDecal className="h-auto w-full" />
+          </motion.div>
         </div>
 
-        <div className="mt-auto flex flex-wrap items-end justify-between gap-8 pt-16">
+        <div className="mt-auto flex flex-wrap items-end justify-between gap-8 pt-8">
           <motion.div variants={fadeUp} className="flex flex-col gap-3">
             <span className="font-label text-[11px] tracking-[0.3em] text-brand-smoke uppercase">
               Agendamento online
@@ -148,13 +155,6 @@ export function Hero({ business, photos }: HeroProps) {
           </motion.a>
         </div>
       </motion.div>
-
-      <div
-        ref={decalRef}
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-10 translate-y-1/4"
-      >
-        <HairDecal className="h-[26vh] max-h-72 min-h-40 w-full" />
-      </div>
     </section>
   );
 }
