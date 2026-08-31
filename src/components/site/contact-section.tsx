@@ -1,5 +1,6 @@
 import { formatBusinessHours } from "@/lib/business-hours";
 import { getWhatsappLink } from "@/lib/whatsapp";
+import { Reveal } from "./reveal";
 import type { BusinessSettings } from "@/lib/supabase/types";
 
 interface ContactSectionProps {
@@ -19,10 +20,10 @@ export function ContactSection({ business }: ContactSectionProps) {
   return (
     <section
       id="contato"
-      className="mx-auto grid max-w-5xl gap-10 px-6 py-20 sm:grid-cols-2"
+      className="mx-auto grid max-w-5xl gap-10 px-6 py-24 sm:grid-cols-2"
     >
-      <div>
-        <h2 className="text-2xl font-bold text-brand-black sm:text-3xl">
+      <Reveal>
+        <h2 className="font-display text-2xl font-bold text-brand-black sm:text-3xl">
           Contato
         </h2>
 
@@ -55,14 +56,14 @@ export function ContactSection({ business }: ContactSectionProps) {
             </li>
           )}
         </ul>
-      </div>
+      </Reveal>
 
       {hours.length > 0 && (
-        <div>
-          <h3 className="font-semibold text-brand-black">
+        <Reveal delay={0.1}>
+          <h3 className="font-display font-semibold text-brand-black">
             Horário de funcionamento
           </h3>
-          <dl className="mt-4 flex flex-col gap-1 text-sm text-neutral-600">
+          <dl className="mt-4 flex flex-col gap-1 font-label text-sm text-neutral-600">
             {hours.map(({ label, value }) => (
               <div key={label} className="flex justify-between gap-4">
                 <dt>{label}</dt>
@@ -70,7 +71,7 @@ export function ContactSection({ business }: ContactSectionProps) {
               </div>
             ))}
           </dl>
-        </div>
+        </Reveal>
       )}
     </section>
   );

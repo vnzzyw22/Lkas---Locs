@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { JetBrains_Mono, Manrope, Unbounded } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const unbounded = Unbounded({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["500", "700", "900"],
+});
+
+const manrope = Manrope({
+  variable: "--font-body",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-label",
   subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -21,9 +28,40 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${unbounded.variable} ${manrope.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/*
+          THESIS: Lkas Locs' Hero owns "editorial fashion house that
+          happens to braid hair" — refuses the generic salon hero
+          (centered headshot, pastel gradient, rounded cards).
+          OWN-WORLD: near-black warm ground, brand red carrying 30-60%
+          of the surface via massive display type + hand-drawn stroke
+          linework, warm off-white text, oxblood depth layers.
+          Unbounded display, JetBrains Mono scattered factual captions,
+          asymmetric overlapping composition, wide breathing margins,
+          hand-drawn SVG braid/loc decals stroke-drawn on load,
+          bottom-bleeding.
+          STORY: visitor reads a premium, street-fashion hair studio,
+          not a generic salon; books a horário or scrolls to see the
+          craft.
+          FIRST VIEWPORT: full-bleed near-black Hero. Giant asymmetric
+          "LKAS LOCS" wordmark (Unbounded, ~9-14vw), mixed red-fill /
+          red-outline. Small rotated photo duo top-right (real
+          portfolio shots). Scattered mono captions (endereço,
+          horário, contagem de serviços) placed around the
+          composition, never stacked as a kicker. Hand-drawn SVG
+          braid/loc decal anchored bottom, bleeding past the viewport
+          edge. CTA "Agendar horário" bottom-left.
+          FORM: editorial streetwear fashion-magazine hero, pinned by
+          the user's explicit brief (Dribbble Auralee reference) — no
+          direction roll. seed: brief-pinned/lkas-hero-v1.
+          FINISH: unreviewed and undocumented is unfinished; this
+          build ends with the finish review, the verdict, DESIGN.md,
+          and every shipping raster carrying its provenance.
+        */}
+        {children}
+      </body>
     </html>
   );
 }

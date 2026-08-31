@@ -4,10 +4,16 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* Tokens extraídos da logo atual (placeholder de baixa-res).
-     Reavaliar quando a versão maior/vetorial da logo chegar (Fase 2/5). */
+  /* Paleta derivada da logo (vermelho + preto), estendida pro mundo
+     visual da Fase 5 — ver PRODUCT.md > Brand Commitments e DESIGN.md.
+     brand-red é o token histórico (usado no admin, login, cards do
+     site) — mantido estável; os demais são a extensão editorial. */
   --color-brand-red: #c8102e;
   --color-brand-black: #111111;
+  --color-brand-ink: #0d0b0a; /* preto quente, chão da Hero */
+  --color-brand-cream: #f3ede3; /* texto sobre fundo escuro */
+  --color-brand-oxblood: #4a1116; /* profundidade — gradientes/sombra */
+  --color-brand-smoke: #9c948b; /* texto secundário sobre fundo escuro */
 }
 
 @theme inline {
@@ -15,19 +21,17 @@
   --color-foreground: var(--foreground);
   --color-brand-red: var(--color-brand-red);
   --color-brand-black: var(--color-brand-black);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-brand-ink: var(--color-brand-ink);
+  --color-brand-cream: var(--color-brand-cream);
+  --color-brand-oxblood: var(--color-brand-oxblood);
+  --color-brand-smoke: var(--color-brand-smoke);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --font-label: var(--font-label);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), Arial, Helvetica, sans-serif;
 }

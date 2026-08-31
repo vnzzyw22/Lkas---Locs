@@ -1,43 +1,189 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { HairDecal } from "./hair-decal";
+import type { BusinessSettings, GalleryPhoto } from "@/lib/supabase/types";
 
-export function Hero() {
+interface HeroProps {
+  business: BusinessSettings | null;
+  photos: GalleryPhoto[];
+}
+
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.15 } },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
+export function Hero({ business, photos }: HeroProps) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
+  const decalRef = useRef<HTMLDivElement>(null);
+  const photosRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (reduceMotion || !sectionRef.current) return;
+
+    let cleanup = () => {};
+
+    import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
+      gsap.registerPlugin(ScrollTrigger);
+
+      const ctx = gsap.context(() => {
+        const scrollConfig = {
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        };
+
+        gsap.to(bgRef.current, { yPercent: 18, ease: "none", scrollTrigger: scrollConfig });
+        gsap.to(decalRef.current, { yPercent: 40, ease: "none", scrollTrigger: scrollConfig });
+        gsap.to(photosRef.current, {
+          yPercent: -22,
+          rotate: 2,
+          ease: "none",
+          scrollTrigger: scrollConfig,
+        });
+      }, sectionRef);
+
+      cleanup = () => ctx.revert();
+    });
+
+    return () => cleanup();
+  }, [reduceMotion]);
+
+  const heroPhotos = photos.slice(0, 2);
+
   return (
     <section
       id="topo"
-      className="relative flex flex-col items-center gap-8 overflow-hidden bg-brand-black px-6 py-20 text-center text-white"
+      ref={sectionRef}
+      className="relative bg-brand-ink text-brand-cream"
     >
-      <Image
-        src="/imagens/foto-logo-lkas.jpg"
-        alt="Lkas Locs"
-        width={96}
-        height={96}
-        priority
-        className="rounded-full ring-4 ring-brand-red"
-      />
-
-      <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold sm:text-5xl">
-          Lkas <span className="text-brand-red">Locs</span>
-        </h1>
-        <p className="mx-auto max-w-md text-neutral-300">
-          Locs, tranças, twists e cuidados capilares em Maringá — PR.
-        </p>
+      {/* wrapper próprio com overflow-hidden: só o decalque, lá embaixo,
+          pode sangrar pra fora da Hero — o glow de fundo não. */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div
+          ref={bgRef}
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(60% 55% at 78% 18%, var(--color-brand-oxblood) 0%, transparent 65%), radial-gradient(50% 45% at 12% 85%, var(--color-brand-oxblood) 0%, transparent 60%)",
+          }}
+        />
       </div>
 
-      <div className="flex flex-wrap justify-center gap-3">
-        <Link
-          href="/agendar"
-          className="rounded-full bg-brand-red px-6 py-3 text-sm font-semibold transition hover:opacity-90"
-        >
-          Agendar horário
-        </Link>
-        <a
-          href="#servicos"
-          className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold transition hover:bg-white/10"
-        >
-          Ver serviços
-        </a>
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="relative z-20 mx-auto flex min-h-[100svh] max-w-[1500px] flex-col justify-between px-6 pt-28 pb-24 sm:px-10 lg:px-16"
+      >
+        <div className="flex items-start justify-between gap-6">
+          <motion.p
+            variants={fadeUp}
+            className="font-label text-xs tracking-[0.25em] text-brand-smoke uppercase"
+          >
+            Locs · Tranças · Twists
+          </motion.p>
+
+          {heroPhotos.length > 0 && (
+            <div
+              ref={photosRef}
+              className="relative hidden h-32 w-40 shrink-0 sm:block lg:h-40 lg:w-52"
+            >
+              {heroPhotos.map((photo, i) => (
+                <motion.div
+                  key={photo.id}
+                  variants={fadeUp}
+                  className={`absolute overflow-hidden border-2 border-brand-cream/80 shadow-xl shadow-black/40 ${
+                    i === 0
+                      ? "top-0 right-4 h-24 w-20 rotate-[-6deg] lg:h-32 lg:w-24"
+                      : "top-8 right-0 h-24 w-20 rotate-[5deg] lg:h-32 lg:w-24"
+                  }`}
+                >
+                  <Image
+                    src={photo.url}
+                    alt={photo.category ?? "Trabalho Lkas Locs"}
+                    fill
+                    sizes="160px"
+                    className="object-cover"
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="relative my-10 lg:my-16">
+          <motion.h1
+            variants={fadeUp}
+            className="font-display leading-[0.82] font-black tracking-tight"
+            style={{ fontSize: "clamp(3.25rem, 12vw, 9.5rem)" }}
+          >
+            <span className="block text-brand-red">LKAS</span>
+            <span
+              className="mt-1 block text-transparent lg:ml-16"
+              style={{ WebkitTextStroke: "2px var(--color-brand-cream)" }}
+            >
+              LOCS
+            </span>
+          </motion.h1>
+
+          <motion.p
+            variants={fadeUp}
+            className="mt-6 max-w-xs font-label text-xs leading-relaxed tracking-widest text-brand-smoke uppercase lg:ml-16"
+          >
+            {business?.address ?? "Maringá — PR"}
+          </motion.p>
+        </div>
+
+        <div className="flex flex-wrap items-end justify-between gap-8">
+          <motion.div variants={fadeUp} className="flex flex-col gap-3">
+            <span className="font-label text-[11px] tracking-[0.3em] text-brand-smoke uppercase">
+              Agendamento online
+            </span>
+            <Link
+              href="/agendar"
+              className="group inline-flex w-fit items-center gap-3 rounded-full bg-brand-cream px-7 py-3.5 font-label text-xs font-medium tracking-widest text-brand-ink uppercase transition hover:bg-brand-red hover:text-brand-cream"
+            >
+              Agendar horário
+              <span className="transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </Link>
+          </motion.div>
+
+          <motion.a
+            variants={fadeUp}
+            href="#servicos"
+            className="hidden flex-col items-center gap-2 font-label text-[10px] tracking-[0.3em] text-brand-smoke uppercase sm:flex"
+          >
+            Explorar
+            <span className="h-10 w-px animate-pulse bg-brand-smoke" />
+          </motion.a>
+        </div>
+      </motion.div>
+
+      <div
+        ref={decalRef}
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-10 translate-y-1/4"
+      >
+        <HairDecal className="h-[26vh] max-h-72 min-h-40 w-full" />
       </div>
     </section>
   );

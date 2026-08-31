@@ -178,8 +178,50 @@ antes de mexer nisso de novo.
   - Padrão de mutação nos client components do painel: chamar a Server Action
     diretamente (não `<form action>`) e, no sucesso, `router.refresh()` — sem
     isso a lista não atualiza porque os dados vêm de um Server Component pai.
-- **Fase 5 — Hero avançada:** parallax, decalques/rabiscos street/fashion sketch
-  (sem rostos/personagens/clipart), animações finas de scroll.
+- **Fase 5 — Hero avançada** ✅ concluída:
+  - ✅ `PRODUCT.md` e `DESIGN.md` criados na raiz (processo do skill
+    `impeccable`) — brief visual completo do cliente (referência Dribbble
+    Auralee, decalques, paleta derivada da logo, navbar, movimento) estava
+    no prompt original e tinha sido perdido numa passada anterior; recuperado
+    e registrado como brand commitment durável.
+  - ✅ Hero reconstruída (`src/components/site/hero.tsx`): wordmark
+    "LKAS LOCS" gigante (Unbounded, `clamp(3.25rem,12vw,9.5rem)`, "LKAS"
+    preenchido em vermelho / "LOCS" só contorno), fotos reais no canto
+    superior direito, legendas mono espalhadas (endereço real, nunca
+    inventado), composição assimétrica em 3 zonas, fundo quase-preto
+    (`--color-brand-ink`) com glow oxblood contido em wrapper próprio.
+  - ✅ Decalque de assinatura (`src/components/site/hair-decal.tsx`): tiras
+    de locs/tranças geradas parametricamente (Catmull-Rom sobre onda
+    senoidal, determinístico por índice — sem `Math.random`, evita
+    divergência SSR/cliente), "desenhadas" via `framer-motion` `pathLength`
+    ao montar. Ancorado na base da Hero, sangra de propósito pra dentro da
+    seção seguinte (`z-10`, sem `overflow-hidden` na Hero) — só esse
+    elemento tem permissão de vazar, o glow de fundo fica contido à parte.
+  - ✅ Parallax real via GSAP ScrollTrigger (fundo/decalque/fotos em
+    velocidades diferentes) + entrada coreografada via Framer Motion
+    (stagger). `framer-motion` e `gsap` instalados.
+  - ✅ 3 fontes novas via `next/font/google`: Unbounded (display), Manrope
+    (corpo, substitui Geist), JetBrains Mono (legendas/dados — endereço,
+    horário, categoria; nunca decorativo). Tokens de cor estendidos em
+    `globals.css`: `--color-brand-ink/cream/oxblood/smoke` (mantendo
+    `--color-brand-red`/`black` estáveis, já usados no admin desde a
+    Fase 1).
+  - ✅ Navbar reescrita pro mundo escuro (`bg-brand-ink/95`), com "Agendar"
+    como CTA separado dos links — igual em toda a página, sem troca de cor
+    por scroll (decisão de simplicidade, ver DESIGN.md).
+  - ✅ Passada leve de continuidade nas seções da Fase 2 (Serviços, Galeria,
+    Sobre, Contato): `<Reveal>` (`src/components/site/reveal.tsx`, fade+slide
+    `whileInView`) + tipografia display/label — sem redesenhar a estrutura
+    delas (fora do escopo de "Hero avançada").
+  - ⚠️ **Achado de teste:** captura `fullPage` do Playwright renderizou as
+    seções abaixo da Hero em branco — artefato da própria ferramenta de
+    screenshot, que não dispara o `IntersectionObserver` do
+    `whileInView` corretamente numa captura automatizada. Confirmado com
+    scroll real (`window.scrollTo` + screenshot por viewport) que o conteúdo
+    aparece normalmente; usar sempre esse método pra validar reveals de
+    scroll, nunca só a captura `fullPage`.
+  - ✅ Detector mecânico do skill (`detect.mjs`) rodado sobre todos os
+    arquivos alterados — zero achados. `tsc`/`eslint` limpos.
 - **Fase 6 — Performance, responsividade, testes E2E (Playwright), acessibilidade.**
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
