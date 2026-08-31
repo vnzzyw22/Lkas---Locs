@@ -1,8 +1,8 @@
 import type { BusinessHours } from "@/lib/supabase/types";
 
-const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+export const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
-const DAY_LABELS: Record<(typeof DAY_ORDER)[number], string> = {
+export const DAY_LABELS: Record<(typeof DAY_ORDER)[number], string> = {
   mon: "Segunda",
   tue: "Terça",
   wed: "Quarta",
