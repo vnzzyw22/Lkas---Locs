@@ -83,8 +83,26 @@ proxy` (mesmo comportamento, roda sempre em runtime Node.js, não Edge). Usar
 `proxy.ts` na raiz de `src/`, não `middleware.ts`. Ver
 `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`
 antes de mexer nisso de novo.
-- **Fase 2 — Site público (estrutura):** Navbar, Hero (estática), Serviços,
-  Galeria, Sobre, Contato — já puxando dados reais do banco, sem agendamento.
+- **Fase 2 — Site público (estrutura)** ✅ concluída:
+  - ✅ Landing page de seção única (`src/app/page.tsx`, Server Component) com
+    Navbar (menu mobile), Hero estática, Serviços, Galeria, Sobre e Contato,
+    navegação por âncora (`#servicos`, `#galeria`, `#sobre`, `#contato`).
+  - ✅ Componentes em `src/components/site/`. Leituras públicas centralizadas em
+    `src/lib/supabase/queries.ts` (`getBusinessSettings`, `getActiveServices`,
+    `getPublishedGalleryPhotos`), respeitando a RLS de leitura pública já criada
+    na Fase 1 — nada hardcoded no frontend.
+  - ✅ Helpers: `src/lib/whatsapp.ts` (link `wa.me` com mensagem pré-preenchida,
+    reaproveitável na Fase 3), `src/lib/format.ts` (preço em BRL, duração),
+    `src/lib/business-hours.ts` (horário de funcionamento a partir do jsonb
+    `business_hours`).
+  - ✅ Migration `20260831120000_seed_gallery_photos.sql` aplicada no projeto
+    Supabase real: popula `gallery_photos` com as 2 fotos de portfólio já
+    existentes em `public/imagens` (com marca d'água própria, ok para galeria).
+  - ✅ `lang="pt-BR"` no `layout.tsx`.
+  - Sem Framer Motion/GSAP ainda — Hero é estática por design nesta fase;
+    animações finas ficam para a Fase 5.
+  - Texto da seção "Sobre" é placeholder estático (não há campo correspondente
+    no schema ainda) — revisar copy real com o cliente antes do lançamento.
 - **Fase 3 — Agendamento:** fluxo completo do cliente + link WhatsApp pré-preenchido
   + prevenção de conflito no banco.
 - **Fase 4 — Painel administrativo completo:** Dashboard, Agenda, Clientes,

@@ -1,24 +1,34 @@
-import Image from "next/image";
+import { AboutSection } from "@/components/site/about-section";
+import { ContactSection } from "@/components/site/contact-section";
+import { Footer } from "@/components/site/footer";
+import { GallerySection } from "@/components/site/gallery-section";
+import { Hero } from "@/components/site/hero";
+import { Navbar } from "@/components/site/navbar";
+import { ServicesSection } from "@/components/site/services-section";
+import {
+  getActiveServices,
+  getBusinessSettings,
+  getPublishedGalleryPhotos,
+} from "@/lib/supabase/queries";
 
-export default function Home() {
+export default async function Home() {
+  const [business, services, photos] = await Promise.all([
+    getBusinessSettings(),
+    getActiveServices(),
+    getPublishedGalleryPhotos(),
+  ]);
+
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
-      <Image
-        src="/imagens/foto-logo-lkas.jpg"
-        alt="Lkas Locs"
-        width={120}
-        height={120}
-        priority
-        className="rounded-full"
-      />
-      <div>
-        <h1 className="text-2xl font-bold text-brand-black">
-          Lkas <span className="text-brand-red">Locs</span>
-        </h1>
-        <p className="mt-2 text-sm text-neutral-500">
-          Site em construção — Fase 0: fundação do projeto.
-        </p>
-      </div>
-    </main>
+    <>
+      <Navbar />
+      <main className="flex flex-1 flex-col">
+        <Hero whatsapp={business?.whatsapp ?? null} />
+        <ServicesSection services={services} />
+        <GallerySection photos={photos} />
+        <AboutSection />
+        <ContactSection business={business} />
+      </main>
+      <Footer />
+    </>
   );
 }
