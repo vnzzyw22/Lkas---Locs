@@ -1,16 +1,7 @@
 import Image from "next/image";
-import { getWhatsappLink } from "@/lib/whatsapp";
+import Link from "next/link";
 
-interface HeroProps {
-  whatsapp: string | null;
-}
-
-export function Hero({ whatsapp }: HeroProps) {
-  const whatsappLink = getWhatsappLink(
-    whatsapp,
-    "Olá! Vim pelo site e gostaria de agendar um horário na Lkas Locs.",
-  );
-
+export function Hero() {
   return (
     <section
       id="topo"
@@ -35,14 +26,12 @@ export function Hero({ whatsapp }: HeroProps) {
       </div>
 
       <div className="flex flex-wrap justify-center gap-3">
-        <a
-          href={whatsappLink ?? "#contato"}
-          target={whatsappLink ? "_blank" : undefined}
-          rel={whatsappLink ? "noopener noreferrer" : undefined}
+        <Link
+          href="/agendar"
           className="rounded-full bg-brand-red px-6 py-3 text-sm font-semibold transition hover:opacity-90"
         >
           Agendar horário
-        </a>
+        </Link>
         <a
           href="#servicos"
           className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold transition hover:bg-white/10"

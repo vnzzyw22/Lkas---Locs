@@ -22,7 +22,7 @@ export default async function Home() {
     <>
       <Navbar />
       <main className="flex flex-1 flex-col">
-        <Hero whatsapp={business?.whatsapp ?? null} />
+        <Hero />
         <ServicesSection services={services} />
         <GallerySection photos={photos} />
         <AboutSection />

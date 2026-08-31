@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatDuration, formatPrice } from "@/lib/format";
 import type { Service } from "@/lib/supabase/types";
 
@@ -39,6 +40,12 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                   {formatDuration(service.duration_minutes)}
                 </span>
               </div>
+              <Link
+                href={`/agendar?servico=${service.id}`}
+                className="mt-2 rounded-full border border-brand-red px-4 py-2 text-center text-sm font-semibold text-brand-red transition hover:bg-brand-red hover:text-white"
+              >
+                Agendar
+              </Link>
             </article>
           ))}
         </div>

@@ -1,3 +1,4 @@
+import type { BusyRange } from "@/lib/scheduling";
 import { createClient } from "./server";
 import type { BusinessSettings, GalleryPhoto, Service } from "./types";
 
@@ -33,6 +34,46 @@ export async function getActiveServices(): Promise<Service[]> {
   }
 
   return data;
+}
+
+export async function getActiveServiceById(
+  id: string,
+): Promise<Service | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("services")
+    .select("id, name, description, price, duration_minutes, image_url")
+    .eq("active", true)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Erro ao buscar service por id:", error.message);
+    return null;
+  }
+
+  return data;
+}
+
+// Só starts_at/ends_at (ver supabase/migrations/20260901120000_busy_slots_view.sql)
+// — nenhum dado do cliente/agendamento é exposto aqui.
+export async function getBusySlots(
+  fromISO: string,
+  toISO: string,
+): Promise<BusyRange[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("busy_slots")
+    .select("starts_at, ends_at")
+    .lt("starts_at", toISO)
+    .gt("ends_at", fromISO);
+
+  if (error) {
+    console.error("Erro ao buscar busy_slots:", error.message);
+    return [];
+  }
+
+  return data.map((row) => ({ startsAt: row.starts_at, endsAt: row.ends_at }));
 }
 
 export async function getPublishedGalleryPhotos(): Promise<GalleryPhoto[]> {

@@ -103,8 +103,40 @@ antes de mexer nisso de novo.
     animações finas ficam para a Fase 5.
   - Texto da seção "Sobre" é placeholder estático (não há campo correspondente
     no schema ainda) — revisar copy real com o cliente antes do lançamento.
-- **Fase 3 — Agendamento:** fluxo completo do cliente + link WhatsApp pré-preenchido
-  + prevenção de conflito no banco.
+- **Fase 3 — Agendamento** ✅ concluída:
+  - ✅ Página `/agendar` (`src/app/agendar/`) com wizard client-side
+    (`src/components/booking/booking-form.tsx`): serviço → data → horário →
+    dados do cliente → confirmação, com link `wa.me` pré-preenchido ao final.
+    Aceita `?servico=<id>` (usado pelos cards da home e pelo CTA do Hero).
+  - ✅ Server Actions em `src/app/agendar/actions.ts`: `getAvailableSlots`
+    (calcula horários livres) e `createAppointment` (cria `clients` +
+    `appointments`, sempre com `status: "pending"`).
+  - ⚠️ **Achado importante de RLS:** `appointments`/`clients` só têm policy de
+    `SELECT` pra `authenticated` (admin) — não pra `anon`. Isso quebra
+    `INSERT ... RETURNING` (o `.select()` do supabase-js) mesmo quando o
+    `WITH CHECK` do insert passa, porque o Postgres também aplica RLS de
+    leitura sobre a linha retornada. Corrigido gerando o `id` do client no
+    servidor (`crypto.randomUUID()`) e inserindo sem `.select()`. Lição: todo
+    insert público novo neste projeto deve evitar `.select()`/`RETURNING`, a
+    não ser que se adicione uma policy de `SELECT` explícita (avaliar caso a
+    caso — não abrir leitura pública de `clients`/`appointments`, que contêm
+    dado do cliente).
+  - ✅ Migration `20260901120000_busy_slots_view.sql` aplicada no projeto real:
+    view `public.busy_slots` (só `starts_at`/`ends_at`, roda com privilégio do
+    dono pra contornar a RLS acima só nesse recorte de colunas) — nenhum dado
+    de cliente/serviço/motivo de bloqueio é exposto por ela.
+  - ✅ Cálculo de disponibilidade em `src/lib/scheduling.ts` (função pura,
+    testada com dados reais do banco): candidatos a cada 30 min dentro do
+    `business_hours` do dia, descartando overlap com `busy_slots` e horários
+    passados. Fuso fixo `America/Sao_Paulo` (`-03:00`, sem horário de verão no
+    Brasil desde 2019) — sem lib de timezone.
+  - ✅ Testado ponta a ponta contra o banco real via REST API (criação de
+    client/appointment, conflito de horário disparando a constraint
+    `appointments_no_overlap`/`23P01`, leitura da view) — dados de teste
+    removidos ao final. Teste visual no navegador pendente (Playwright MCP
+    ocupado por outra sessão no momento).
+  - Nota: `clients` não é deduplicado por whatsapp — cada agendamento cria um
+    novo registro. Aceitável no MVP; mesclagem de clientes fica pra Fase 4.
 - **Fase 4 — Painel administrativo completo:** Dashboard, Agenda, Clientes,
   Serviços, Galeria, Financeiro, Configurações.
 - **Fase 5 — Hero avançada:** parallax, decalques/rabiscos street/fashion sketch
