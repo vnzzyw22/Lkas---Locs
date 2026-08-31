@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { GalleryGrid } from "./gallery-grid";
 import { Reveal } from "./reveal";
 import type { GalleryPhoto } from "@/lib/supabase/types";
 
@@ -21,21 +21,7 @@ export function GallerySection({ photos }: GallerySectionProps) {
             Fotos em breve.
           </p>
         ) : (
-          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {photos.map((photo, i) => (
-              <Reveal key={photo.id} delay={(i % 3) * 0.08}>
-                <div className="relative aspect-square overflow-hidden rounded-xl bg-neutral-200">
-                  <Image
-                    src={photo.url}
-                    alt={photo.category ?? "Foto da Lkas Locs"}
-                    fill
-                    sizes="(min-width: 640px) 33vw, 50vw"
-                    className="object-cover transition hover:scale-105"
-                  />
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <GalleryGrid photos={photos} />
         )}
       </div>
     </section>

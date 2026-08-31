@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { HairDecal } from "./hair-decal";
+import { HeroPhotoDeck } from "./hero-photo-deck";
 import type { BusinessSettings, GalleryPhoto } from "@/lib/supabase/types";
 
 interface HeroProps {
@@ -31,7 +31,6 @@ export function Hero({ business, photos }: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
   const decalRef = useRef<HTMLDivElement>(null);
-  const photosRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -52,12 +51,6 @@ export function Hero({ business, photos }: HeroProps) {
 
         gsap.to(bgRef.current, { yPercent: 18, ease: "none", scrollTrigger: scrollConfig });
         gsap.to(decalRef.current, { yPercent: 40, ease: "none", scrollTrigger: scrollConfig });
-        gsap.to(photosRef.current, {
-          yPercent: -22,
-          rotate: 2,
-          ease: "none",
-          scrollTrigger: scrollConfig,
-        });
       }, sectionRef);
 
       cleanup = () => ctx.revert();
@@ -65,8 +58,6 @@ export function Hero({ business, photos }: HeroProps) {
 
     return () => cleanup();
   }, [reduceMotion]);
-
-  const heroPhotos = photos.slice(0, 2);
 
   return (
     <section
@@ -101,32 +92,11 @@ export function Hero({ business, photos }: HeroProps) {
             Locs · Tranças · Twists
           </motion.p>
 
-          {heroPhotos.length > 0 && (
-            <div
-              ref={photosRef}
-              className="relative hidden h-32 w-40 shrink-0 sm:block lg:h-40 lg:w-52"
-            >
-              {heroPhotos.map((photo, i) => (
-                <motion.div
-                  key={photo.id}
-                  variants={fadeUp}
-                  className={`absolute overflow-hidden border-2 border-brand-cream/80 shadow-xl shadow-black/40 ${
-                    i === 0
-                      ? "top-0 right-4 h-24 w-20 rotate-[-6deg] lg:h-32 lg:w-24"
-                      : "top-8 right-0 h-24 w-20 rotate-[5deg] lg:h-32 lg:w-24"
-                  }`}
-                >
-                  <Image
-                    src={photo.url}
-                    alt={photo.category ?? "Trabalho Lkas Locs"}
-                    fill
-                    sizes="160px"
-                    className="object-cover"
-                  />
-                </motion.div>
-              ))}
-            </div>
-          )}
+          <HeroPhotoDeck
+            photos={photos}
+            triggerRef={sectionRef}
+            reduceMotion={!!reduceMotion}
+          />
         </div>
 
         <div className="relative mt-8 mb-10 lg:mt-10 lg:mb-14">
