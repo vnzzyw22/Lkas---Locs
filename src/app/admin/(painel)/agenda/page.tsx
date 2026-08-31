@@ -1,14 +1,9 @@
 import { AgendaView } from "@/components/admin/agenda-view";
+import { todayISO } from "@/lib/date";
 import {
   getAppointmentsForRange,
   getBlockedSlotsForRange,
 } from "@/lib/supabase/admin-queries";
-
-function todayISO() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-  }).format(new Date());
-}
 
 export default async function AgendaPage(props: PageProps<"/admin/agenda">) {
   const searchParams = await props.searchParams;

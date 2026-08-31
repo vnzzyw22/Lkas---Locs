@@ -2,18 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { createAppointment, getAvailableSlots } from "@/app/agendar/actions";
+import { todayISO } from "@/lib/date";
 import { formatDuration, formatPrice } from "@/lib/format";
 import type { Service } from "@/lib/supabase/types";
 
 interface BookingFormProps {
   services: Service[];
   preselectedServiceId?: string;
-}
-
-function todayISO() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-  }).format(new Date());
 }
 
 interface SlotPickerProps {

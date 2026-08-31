@@ -1,16 +1,6 @@
 import { FinanceView } from "@/components/admin/finance-view";
+import { currentMonthISO } from "@/lib/date";
 import { getTransactionsForRange } from "@/lib/supabase/admin-queries";
-
-function currentMonthISO() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "2-digit",
-  }).formatToParts(new Date());
-  const year = parts.find((p) => p.type === "year")!.value;
-  const month = parts.find((p) => p.type === "month")!.value;
-  return `${year}-${month}`;
-}
 
 function lastDayOfMonth(monthISO: string) {
   const [year, month] = monthISO.split("-").map(Number);
