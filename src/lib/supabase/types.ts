@@ -24,6 +24,12 @@ export interface Service {
   image_url: string | null;
 }
 
+// Visão completa da tabela — usada só no painel (admin também vê inativos).
+export interface AdminService extends Service {
+  active: boolean;
+  display_order: number;
+}
+
 export interface GalleryPhoto {
   id: string;
   url: string;
