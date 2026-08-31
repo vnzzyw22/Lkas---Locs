@@ -91,7 +91,7 @@ export function Hero({ business, photos }: HeroProps) {
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-20 mx-auto flex min-h-[100svh] max-w-[1500px] flex-col justify-between px-6 pt-28 pb-24 sm:px-10 lg:px-16"
+        className="relative z-20 mx-auto flex min-h-[100svh] max-w-[1500px] flex-col px-6 pt-20 pb-20 sm:px-10 sm:pt-24 lg:px-16"
       >
         <div className="flex items-start justify-between gap-6">
           <motion.p
@@ -129,7 +129,7 @@ export function Hero({ business, photos }: HeroProps) {
           )}
         </div>
 
-        <div className="relative my-10 lg:my-16">
+        <div className="relative mt-8 mb-10 lg:mt-10 lg:mb-14">
           <motion.h1
             variants={fadeUp}
             className="font-display leading-[0.82] font-black tracking-tight"
@@ -152,7 +152,7 @@ export function Hero({ business, photos }: HeroProps) {
           </motion.p>
         </div>
 
-        <div className="flex flex-wrap items-end justify-between gap-8">
+        <div className="mt-auto flex flex-wrap items-end justify-between gap-8 pt-16">
           <motion.div variants={fadeUp} className="flex flex-col gap-3">
             <span className="font-label text-[11px] tracking-[0.3em] text-brand-smoke uppercase">
               Agendamento online
