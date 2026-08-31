@@ -133,12 +133,51 @@ antes de mexer nisso de novo.
   - ✅ Testado ponta a ponta contra o banco real via REST API (criação de
     client/appointment, conflito de horário disparando a constraint
     `appointments_no_overlap`/`23P01`, leitura da view) — dados de teste
-    removidos ao final. Teste visual no navegador pendente (Playwright MCP
-    ocupado por outra sessão no momento).
+    removidos ao final. Confirmado depois também no navegador pelo usuário.
   - Nota: `clients` não é deduplicado por whatsapp — cada agendamento cria um
     novo registro. Aceitável no MVP; mesclagem de clientes fica pra Fase 4.
-- **Fase 4 — Painel administrativo completo:** Dashboard, Agenda, Clientes,
-  Serviços, Galeria, Financeiro, Configurações.
+- **Fase 4 — Painel administrativo completo** ✅ concluída (Configurações →
+  Serviços → Agenda → Clientes → Galeria → Financeiro → Dashboard, nessa
+  ordem, cada seção testada no navegador contra o banco real antes de avançar
+  pra próxima):
+  - ✅ **Configurações** (`src/app/admin/(painel)/configuracoes/`): formulário
+    edita `business_settings` (nome, whatsapp, instagram, endereço, horário de
+    funcionamento por dia). `DAY_ORDER`/`DAY_LABELS` exportados de
+    `src/lib/business-hours.ts` pra reuso no formulário.
+  - ✅ **Serviços** (`.../servicos/`): CRUD completo (`src/lib/supabase/
+    admin-queries.ts#getAllServices` — inclui inativos, ao contrário da versão
+    pública). Exclusão trata `23503` (FK restrict de `appointments`) sugerindo
+    desativar em vez de excluir.
+  - ✅ **Agenda** (`.../agenda/`): visão por dia (`?data=YYYY-MM-DD`),
+    confirmar/cancelar agendamento, criar/remover bloqueio manual
+    (`blocked_slots`, mesma constraint `EXCLUDE` de conflito). Join com
+    `clients`/`services` via `getAppointmentsForRange`.
+  - ✅ **Clientes** (`.../clientes/`): listar, busca client-side, editar,
+    excluir (mesmo tratamento de FK restrict que Serviços).
+  - ✅ **Galeria** (`.../galeria/`): bucket público `gallery` no Supabase
+    Storage (migration `20260901130000_gallery_storage_bucket.sql` — leitura
+    pública, insert/update/delete só admin). Upload valida tipo/tamanho
+    (máx. 5MB), gera path com UUID, grava a URL pública em `gallery_photos`.
+    Exclusão remove registro **e** arquivo do Storage — mas só quando a URL
+    bate com o padrão do bucket; as 2 fotos legadas em `public/imagens` (seed
+    da Fase 2) são ignoradas nesse passo, só o registro do banco sai.
+    `next.config.ts` libera o hostname do Supabase (derivado de
+    `NEXT_PUBLIC_SUPABASE_URL`, não hardcoded — importa pro modelo de reuso)
+    em `images.remotePatterns` pro `next/image`.
+  - ✅ **Financeiro** (`.../financeiro/`): navegação por mês (`?mes=YYYY-MM`),
+    resumo (entradas/saídas/saldo), lançar/excluir transação.
+  - ✅ **Dashboard** (`.../page.tsx`): atendimentos de hoje, próximos 7 dias e
+    resumo financeiro do mês — reaproveita as queries de Agenda/Financeiro,
+    sem nova lógica de dados.
+  - ✅ `getAllClients`, `getAllServices`, `getAppointmentsForRange`,
+    `getBlockedSlotsForRange`, `getAllGalleryPhotos`, `getTransactionsForRange`
+    centralizadas em `src/lib/supabase/admin-queries.ts` (separado de
+    `queries.ts`, que é só leitura pública — RLS diferente, não misturar).
+  - ✅ `todayISO`/`currentMonthISO` centralizados em `src/lib/date.ts`
+    (estavam duplicados em `booking-form.tsx`, Agenda e Financeiro).
+  - Padrão de mutação nos client components do painel: chamar a Server Action
+    diretamente (não `<form action>`) e, no sucesso, `router.refresh()` — sem
+    isso a lista não atualiza porque os dados vêm de um Server Component pai.
 - **Fase 5 — Hero avançada:** parallax, decalques/rabiscos street/fashion sketch
   (sem rostos/personagens/clipart), animações finas de scroll.
 - **Fase 6 — Performance, responsividade, testes E2E (Playwright), acessibilidade.**
