@@ -36,6 +36,11 @@ export interface GalleryPhoto {
   category: string | null;
 }
 
+export interface AdminGalleryPhoto extends GalleryPhoto {
+  published: boolean;
+  display_order: number;
+}
+
 export type AppointmentStatus = "pending" | "confirmed" | "cancelled";
 
 export interface AdminAppointment {

@@ -3,6 +3,7 @@ import type {
   AdminAppointment,
   AdminBlockedSlot,
   AdminClient,
+  AdminGalleryPhoto,
   AdminService,
 } from "./types";
 
@@ -77,6 +78,21 @@ export async function getAllClients(): Promise<AdminClient[]> {
 
   if (error) {
     console.error("Erro ao buscar clients (admin):", error.message);
+    return [];
+  }
+
+  return data;
+}
+
+export async function getAllGalleryPhotos(): Promise<AdminGalleryPhoto[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("gallery_photos")
+    .select("id, url, category, published, display_order")
+    .order("display_order", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao buscar gallery_photos (admin):", error.message);
     return [];
   }
 
