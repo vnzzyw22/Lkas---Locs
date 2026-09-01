@@ -156,9 +156,13 @@ diferentes ao rolar). Nas seções claras, sombra leve (`shadow-sm` →
 `shadow-md` no hover) nos cards de serviço — mantido da Fase 2.
 
 ### Named Rules
-**A Regra do Vazamento Controlado.** Só o decalque de locs pode sangrar
-pra fora dos limites da Hero (`z-10`, sem `overflow-hidden` na seção); todo
-o resto do conteúdo, incluindo o glow de fundo, fica contido.
+**A Regra do Vazamento Controlado.** Nada sangra pra fora dos limites da
+Hero — o glow de fundo e o decalque em marca d'água ficam contidos no
+mesmo wrapper `overflow-hidden` (`src/components/site/hero.tsx`). Isso
+mudou desde a v1: o decalque de assinatura deixou de ser ancorado na base
+da seção sangrando pra fora (Fase 5 inicial) — o cliente pediu uma
+composição mais compacta, ancorada ao lado do wordmark (ver histórico
+abaixo).
 
 ## Shapes
 
@@ -185,20 +189,52 @@ evitar complexidade de troca de cor por scroll).
 - **Secundário (card de serviço):** contorno `brand-red`, preenche no
   hover.
 
-### HairDecal (componente de assinatura)
-`src/components/site/hair-decal.tsx`. Tiras paramétricas (Catmull-Rom
-sobre onda senoidal com envelope, determinístico por índice — sem
-`Math.random`, pra não divergir SSR/cliente), com marcas de torção
-perpendiculares simulando textura de loc/rope. "Desenhadas" via
-`framer-motion` `pathLength` ao montar (não por scroll — o decalque já
-faz parte da primeira viewport). 1 a cada 3 tiras em vermelho, o resto em
-creme translúcido. Nunca usar pra representar rosto, personagem ou
-clipart — só linework abstrato de cabelo.
+### Decalque de assinatura (imagens reais, não mais procedural)
+Duas versões: v1–v4 eram SVG gerado parametricamente
+(`src/components/site/hair-decal.tsx`, removido). O cliente forneceu
+fotos reais dos 3 penteados e, numa conversa à parte com uma ferramenta
+de imagem, chegou num traço de linework vermelho fino (sem preenchimento
+sólido, pontas afiadas, fundo transparente) que bateu com a referência
+"rabisco/decalque street" — ver `public/imagens/decalque01.jpg` e
+`decalque02.jpg` (originais do cliente, fundo "transparente" só
+representado por um checkerboard, sem alfa real) processados por
+`scripts/process-decals.mjs` (máscara de alfa por "vermelhidão" do
+pixel, `r - max(g,b)`, recolorido pra `--color-brand-red` exato) em
+`public/imagens/decal-locs-01.png` / `decal-locs-02.png`. Uso em
+`hero.tsx`: `decal-locs-01` como acento ancorado ao lado do "LOCS"
+(pequeno, opacidade cheia, leve rotação); `decal-locs-02` como marca
+d'água de fundo (opacidade ~0.08, escala gigante, sangrando pelas bordas
+do wrapper `overflow-hidden` — abordagem "1" das 3 discutidas com o
+cliente). Nunca usar pra representar rosto, personagem ou clipart — só
+linework abstrato de cabelo, real ou desenhado.
 
 ### Cards de Serviço / Fotos da Galeria
 Herdados da Fase 2 sem mudança estrutural: `rounded-xl`, `border
 border-black/5`, `shadow-sm` → `shadow-md` no hover. Só o botão interno
 ("Agendar") e o heading da seção mudaram de tipografia.
+
+### Brand Outro (Sobre + Contato + Rodapé, Fase 6)
+`src/components/site/brand-outro.tsx` + `brand-outro-video.tsx`. Estrutura
+"sanduíche" da página: Hero escura (abertura) → Serviços/Galeria clara
+(conteúdo funcional, preço/duração/fotos precisam de fundo neutro) → Sobre +
+Contato + Rodapé escura de novo (fechamento), ecoando a Hero com um vídeo
+real da marca (`public/imagens/video-marca-lkas.mp4`) rodando ao fundo em
+opacidade baixa (`opacity-35`) sob um véu escuro (`bg-brand-ink/65`) — as
+duas camadas garantem juntas o contraste mínimo AA mesmo no pior caso (frame
+branco/claro do vídeo; conferido com a fórmula de contraste WCAG, ver Fase 6
+no CLAUDE.md). Vídeo em tag `<video autoPlay>` estática, sem
+`IntersectionObserver`/carregamento sob demanda — tentativa de otimizar
+isso quebrou a exibição 2x sem causa clara identificada, revertida
+deliberadamente (custo aceito: ~4.4MB carregam eager; ver Fase 6 no
+CLAUDE.md antes de tentar essa otimização de novo). **Decisão do cliente:** roda sempre, mesmo com
+"reduzir animação" ativado no SO (mesma escolha já feita pra flutuação idle
+das fotos, ver `hero-photo-deck.tsx`) — avisado que autoplay em loop é
+justamente o caso clássico que essa preferência de acessibilidade cobre. `AboutSection`/`ContactSection`/`Footer` tiveram as cores
+trocadas pro mundo escuro (`text-brand-cream`/`text-brand-smoke`, mesmos
+tokens da Hero/navbar) — nenhuma das duas seções é usada fora da home.
+`Footer` fica fora do `<main>` mas dentro do `BrandOutro`, pra manter o papel
+de landmark `contentinfo` (um `<footer>` aninhado dentro de `<main>` perde
+esse papel implícito pela spec).
 
 ## Do's e Don'ts
 
@@ -206,17 +242,20 @@ border-black/5`, `shadow-sm` → `shadow-md` no hover. Só o botão interno
 - **Do** usar `font-label` (JetBrains Mono, uppercase, tracked) só pra
   informação factual real (endereço, horário, categoria) — nunca como
   decoração "tech" vazia.
-- **Do** manter o glow de fundo da Hero contido em seu próprio wrapper
-  `overflow-hidden`; só o `HairDecal` tem permissão de sangrar.
-- **Do** gerar variação de `HairDecal` por índice determinístico — nunca
-  `Math.random()` num componente que renderiza no servidor.
+- **Do** manter o glow de fundo e o decalque em marca d'água da Hero
+  contidos no mesmo wrapper `overflow-hidden` — nada sangra pra fora da
+  seção.
 - **Do** manter `--color-brand-red` estável — é usado fora do site
   público (admin, login) desde a Fase 1.
+- **Do** usar `next/image` com `fill` sempre dentro de um elemento com
+  `position: relative` explícito — sem isso a imagem quebra o layout
+  (achado real: era a causa de o título não subir na Hero, ver
+  `hero-photo-deck.tsx`).
 
 ### Don't:
-- **Don't** adicionar rosto, personagem, cartoon ou clipart ao
-  `HairDecal` ou a qualquer decalque futuro — só linework abstrato de
-  cabelo (regra vinda do brief do cliente, ver PRODUCT.md).
+- **Don't** adicionar rosto, personagem, cartoon ou clipart a qualquer
+  decalque — só linework abstrato de cabelo, real ou desenhado (regra
+  vinda do brief do cliente, ver PRODUCT.md).
 - **Don't** empilhar uma legenda mono diretamente acima de um heading
   como "eyebrow" — ver Regra do Kicker Proibido.
 - **Don't** trocar a cor da Navbar dinamicamente por scroll sem decisão

@@ -59,6 +59,7 @@ function SlotPicker({
         <button
           key={slot}
           type="button"
+          aria-pressed={selectedTime === slot}
           onClick={() => onSelect(slot)}
           className={`rounded-lg border px-3 py-2 text-sm transition ${
             selectedTime === slot

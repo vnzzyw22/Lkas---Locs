@@ -222,7 +222,187 @@ antes de mexer nisso de novo.
     scroll, nunca só a captura `fullPage`.
   - ✅ Detector mecânico do skill (`detect.mjs`) rodado sobre todos os
     arquivos alterados — zero achados. `tsc`/`eslint` limpos.
+  - ✅ **Rodada de feedback pós-Fase 5** (2026-09-01): decalque procedural
+    (`hair-decal.tsx`) substituído por 2 fotos reais do cliente
+    (`public/imagens/decalque01.jpg`/`decalque02.jpg`, traço vermelho
+    fino sobre fundo "transparente" só representado por checkerboard, sem
+    alfa real) processadas por `scripts/process-decals.mjs` (máscara de
+    alfa por "vermelhidão" do pixel, recolorido pra `--color-brand-red`
+    exato) em `decal-locs-01.png`/`decal-locs-02.png` (alfa real,
+    conferido). Uso em `hero.tsx`: `decal-locs-01` como acento ao lado do
+    "LOCS"; `decal-locs-02` como marca d'água de fundo em escala gigante,
+    opacidade baixa. Ver `DESIGN.md` > Decalque de assinatura.
+  - ⚠️ **Achado real de bug:** o `<Image fill>` de cada foto em
+    `hero-photo-deck.tsx` estava dentro de uma div sem `position:
+    relative` — o Next.js exige um ancestral posicionado pra `fill`
+    funcionar; sem isso a imagem tende a estourar o contêiner pretendido.
+    Era a causa provável do título não subir mesmo depois de reduzir o
+    espaçamento (as fotos "ocupavam o espaço da foto inteira", no
+    diagnóstico do próprio cliente). Corrigido adicionando `relative` na
+    classe do wrapper. Lição: sempre conferir o warning do Next no console
+    do navegador (`has "fill" and parent element with invalid
+    "position"`) antes de investigar CSS/spacing como causa de layout
+    quebrado.
+  - ✅ Deque de fotos (`HeroPhotoDeck`) tirado do fluxo do layout (virou
+    `absolute` dentro de um wrapper `relative` só com a legenda) — antes
+    reservava altura de flex-row mesmo com as fotos posicionadas
+    absolutamente dentro dele, empurrando o título pra baixo.
+  - ⚠️ **Achado de ambiente:** console do navegador do cliente mostrou
+    "You have Reduced Motion enabled on your device" (aviso do
+    Framer Motion) — o SO/navegador dele está com "reduzir animações"
+    ativado, o que desliga o parallax do GSAP e a animação idle das fotos
+    (ambos checam `useReducedMotion()`, corretamente, por acessibilidade).
+    É a explicação provável pro relato de "a flutuação não está mais
+    funcionando" — não é regressão de código. Reforçada a flutuação idle
+    das fotos (`hero-photo-deck.tsx`: adicionado bob vertical além da
+    leve rotação) pra ficar mais perceptível quando animações estiverem
+    ativas. Não decidido ainda se o bob idle (decorativo, não
+    scroll-linked) deveria ignorar essa preferência — perguntar ao
+    cliente antes de mudar esse gate.
 - **Fase 6 — Performance, responsividade, testes E2E (Playwright), acessibilidade.**
+  Em andamento (2026-09-01). Ordem escolhida com o cliente: responsividade →
+  acessibilidade → performance → testes E2E.
+  - ✅ **Responsividade — Hero:** criado `hero-photo-strip.tsx` (fileira
+    estática de fotos reais, sem leque/parallax/hover, só `sm:hidden`
+    implícito por não ter equivalente do lado do deque — a lógica de
+    quando cada um aparece já é `sm:` em ambos) — mostrado abaixo do
+    endereço, exclusivamente abaixo de 640px. Acima disso, o
+    `HeroPhotoDeck` (leque + parallax + hover/toque) assume. O decalque
+    de assinatura continua escondido no mobile (decorativo; as fotos
+    reais do trabalho importam mais nesse espaço apertado).
+  - ✅ **Pendência resolvida:** o "quase nada aparecendo" relatado no
+    celular do cliente **não era bug do código** — era o Chrome Android
+    renderizando a página em modo "Site para computador" (navbar
+    aparecia com o menu completo de desktop, sem o hambúrguer mobile,
+    confirmado por screenshot). Confirmado no F12 (emulação mobile) que
+    está tudo certo. Resto do site público (`/agendar`, Serviços,
+    Galeria, Sobre, Contato, Rodapé) auditado por leitura de código —
+    nenhum outro `Image fill` sem `position: relative`, nenhuma largura
+    fixa arriscando overflow horizontal.
+  - ✅ **Acessibilidade — primeira passada:**
+    - Link "Pular para o conteúdo" (`src/app/layout.tsx`, `sr-only
+      focus:not-sr-only`) apontando pra `#conteudo` — adicionado esse id
+      no `<main>` de `page.tsx` e `agendar/page.tsx`.
+    - `aria-pressed` nos botões de horário do agendamento
+      (`booking-form.tsx#SlotPicker`) — sem isso, leitor de tela não
+      anunciava qual horário estava selecionado.
+    - `aria-label` do botão hambúrguer (`navbar.tsx`) agora reflete o
+      estado ("Abrir menu"/"Fechar menu"), não só `aria-expanded`.
+    - Conferido: nenhum `outline-none` sem substituto (só existe no
+      login do admin, com `focus:ring` no lugar — ok). Hierarquia de
+      headings (h1 Hero → h2 por seção → h3 pontual) consistente.
+      Landmarks semânticos (`header`/`main`/`footer`) já existiam.
+    - Contraste checado manualmente (fórmula WCAG): `--color-brand-red`
+      sobre `--color-brand-ink` (wordmark "LKAS") ≈ 3.3:1 — passa AA só
+      por ser "large text" (texto gigante/bold); não usar essa combinação
+      pra texto pequeno/normal em lugar nenhum do site.
+      `--color-brand-smoke` sobre `--color-brand-ink` ≈ 6.6:1, ok.
+    - Pendente (não crítico ainda): sem trap de foco/ESC no menu mobile
+      aberto; sem revisão de `neutral-500` do Tailwind em fundo branco
+      (~4.6:1, no limite do AA — padrão já usado antes da Fase 6, não
+      introduzido agora).
+  - ✅ **Performance — primeira passada:**
+    - `npm run build` real rodado pra medir bundle de verdade (Turbopack
+      não imprime a tabela de tamanho por rota nesta versão — inspecionei
+      os chunks em `.next/static/chunks` direto).
+    - **Achado:** `gsap` (núcleo, ~200KB no disco) estava com `import`
+      estático no topo de `hero.tsx`, `hero-photo-deck.tsx` e
+      `gallery-grid.tsx`, mesmo só sendo usado dentro de `useEffect`
+      pós-montagem — entrava no bundle inicial de toda visita, mesmo com
+      `reduceMotion` ativado. Só o `gsap/ScrollTrigger` já era dinâmico.
+      Corrigido: os 3 arquivos agora importam `gsap` E `gsap/ScrollTrigger`
+      juntos via `Promise.all([import("gsap"), import("gsap/ScrollTrigger")])`
+      dentro do próprio `useEffect` — mesmo comportamento, carrega só
+      depois da montagem, fora do JS inicial da página. Confirmado via
+      build de produção real (`next start` numa porta separada): o chunk
+      de ~200KB do gsap sumiu da lista de scripts carregados na home.
+    - `priority` adicionado nas fotos reais da Hero (`HeroPhotoDeck` e
+      `HeroPhotoStrip`, só as 2 primeiras) — são conteúdo acima da dobra,
+      sem isso o Next as trata como lazy (`loading="lazy"`), atrasando o
+      carregamento do que já aparece na primeira tela.
+    - `package.json` conferido: sem dependências não usadas.
+    - Pendente pra próxima passada: nenhuma imagem tem `next/image` com
+      formato AVIF/WebP forçado nem `blur` placeholder — avaliar se vale a
+      pena; e medir Core Web Vitals reais (LCP/CLS/INP) com Lighthouse ou
+      PageSpeed Insights, que eu não consigo rodar sem navegador aqui.
+  - ✅ **Brand Outro (vídeo de fundo em Sobre + Contato + Rodapé):** cliente
+    trouxe um vídeo real da marca (`WhatsApp Video 2026-09-01 at
+    15.04.08.mp4`, renomeado pra `public/imagens/video-marca-lkas.mp4`, 4.4MB)
+    querendo usá-lo de fundo, mas o vídeo muda de cor — destruiria
+    legibilidade se colocado direto sobre fundo branco. Uma IA à parte
+    sugeriu bloco escuro + overlay (sugeriu "Serviços"); decisão tomada em
+    conjunto foi usar em **Sobre + Contato + Rodapé** (não Serviços/Galeria,
+    que precisam de fundo neutro pra preço/duração/fotos), criando estrutura
+    "sanduíche" com a Hero. Implementado em `brand-outro.tsx` +
+    `brand-outro-video.tsx` (ver `DESIGN.md` > Brand Outro pro detalhe
+    técnico completo: opacidades calculadas por contraste WCAG, lazy via
+    `IntersectionObserver`, `motion-reduce:hidden`). `AboutSection`/
+    `ContactSection`/`Footer` migraram pra paleta escura da Hero.
+    **Limitação:** não consegui testar visualmente (sem Playwright) — pedir
+    pro cliente conferir no navegador (scroll até o fim) antes de dar como
+    fechado.
+    - ⚠️ **Achado de ambiente (de novo):** cliente reportou "só tela preta"
+      — era o `motion-reduce:hidden` do vídeo escondendo tudo porque o
+      navegador dele está com "reduzir animação" ativado (mesmo achado já
+      registrado acima pra Hero). Decisão do cliente, informado do
+      trade-off: vídeo autoplay em loop **ignora** essa preferência agora
+      (removido o `motion-reduce:hidden`), mesma escolha já feita pra
+      flutuação idle das fotos.
+    - ⚠️ **Bug real, causa raiz encontrada:** mesmo sem o `motion-reduce` e
+      com o vídeo simplificado ao máximo (tag estática, `autoPlay` direto
+      no HTML, sem JS nenhum), ainda não aparecia — 3ª tentativa falhando.
+      Achado via log do servidor de dev (`GET /imagens/video-marca-lkas
+      404`, repetido em toda visita): o navegador pedia o arquivo **sem a
+      extensão `.mp4`** — causa exata não identificada (não reproduzido
+      via `curl`, só no navegador real do cliente), mas confirmado que é
+      isso mesmo: com um `rewrites()` em `next.config.ts` mapeando
+      `/imagens/video-marca-lkas` → `/imagens/video-marca-lkas.mp4`, o
+      arquivo passa a responder 200 nos dois caminhos. Lição: quando um
+      recurso "não aparece" sem erro nenhum no console, checar o log de
+      requisições do servidor (`next dev` loga toda rota, inclusive 404) —
+      foi isso que revelou o problema real, depois de duas tentativas de
+      reescrever a lógica de carregamento do vídeo sem necessidade (o
+      problema nunca esteve ali).
+    - ✅ **Confirmado funcionando pelo cliente** (2026-09-01), na versão
+      estática simples (`<video autoPlay src=...>`, sem
+      `IntersectionObserver`/carregamento sob demanda). Tentei reintroduzir
+      essa otimização de performance logo em seguida, sem testar de novo
+      antes — quebrou de novo. Decisão: **manter a versão estática**
+      (custo aceito: ~4.4MB carregam eager, mesmo a seção ficando abaixo da
+      dobra) até haver uma sessão com Playwright disponível pra testar a
+      versão lazy com segurança antes de trocar de novo. Não reintroduzir
+      o `IntersectionObserver` aqui sem testar ponta a ponta primeiro.
+  - ⏸️ **Vídeo de fundo removido** (2026-09-01): tentativa de usar o vídeo
+    real da marca em Sobre/Contato/Rodapé (ver bullet acima) não funcionou
+    no navegador do cliente mesmo após corrigir a causa raiz encontrada
+    (404 por extensão faltando) — 2ª tentativa de reintroduzir a
+    otimização de carregamento quebrou de novo. A pedido do cliente,
+    `brand-outro-video.tsx` foi **removido** e `brand-outro.tsx` virou só
+    `bg-brand-ink` sólido (mantém o "sanduíche" escuro com a Hero, sem
+    vídeo). O arquivo `public/imagens/video-marca-lkas.mp4` continua no
+    projeto (não pesa nada parado) pra retomar essa ideia numa sessão com
+    Playwright disponível — **não reimplementar sem testar ponta a ponta
+    antes de entregar**.
+  - ✅ **Redesign de Serviços** (2026-09-01): cards perderam
+    `rounded-xl`/fundo branco/sombra — viraram vazados (`border
+    border-brand-red/40`, cantos retos). Botão "Agendar" virou bloco
+    sólido `bg-brand-red` com cantos retos (diferente do CTA da navbar,
+    que é `rounded-full` — pedido específico pra esse contexto). **Duas
+    coisas testadas e revertidas a pedido do cliente:** (1) fundo escuro
+    `bg-brand-ink` — não gostou, voltou pro fundo claro original (`text
+    -brand-black`/`text-neutral-500`, não `-cream`/`-smoke`); (2)
+    escalonamento entre cards (`sm:mt-8` em índices ímpares) — achou
+    "torto", removido, grade voltou a ficar perfeitamente alinhada. Fica
+    então: fundo claro igual antes + cards quadrados/vazados + botão
+    sólido, sem quebra de simetria. Galeria continua clara também
+    (cliente confirmou, sem pendência). Cards aumentados especificamente
+    em `lg:` (padding, gap, tipografia, botão) — sentiu pequeno demais
+    pra tela de computador; mobile/tablet ficaram como estavam.
+  - ⏸️ **Testes E2E (Playwright): pendente, adiado a pedido do cliente.**
+    Motivo: o MCP do Playwright não conectou nesta sessão (várias
+    tentativas), então não dá pra escrever os testes com confiança de que
+    rodam. Retomar quando o Playwright estiver disponível — não avançar
+    pra Fase 7 sem isso.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)

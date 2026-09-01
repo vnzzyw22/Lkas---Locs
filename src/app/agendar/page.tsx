@@ -11,7 +11,7 @@ export default async function AgendarPage(props: PageProps<"/agendar">) {
     : preselectedParam;
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-12">
+    <main id="conteudo" className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-12">
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-brand-black sm:text-3xl">
           Agendar <span className="text-brand-red">horário</span>

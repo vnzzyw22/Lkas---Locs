@@ -23,11 +23,11 @@ export function ContactSection({ business }: ContactSectionProps) {
       className="mx-auto grid max-w-5xl gap-10 px-6 py-24 sm:grid-cols-2"
     >
       <Reveal>
-        <h2 className="font-display text-2xl font-bold text-brand-black sm:text-3xl">
+        <h2 className="font-display text-2xl font-bold text-brand-cream sm:text-3xl">
           Contato
         </h2>
 
-        <ul className="mt-6 flex flex-col gap-3 text-neutral-600">
+        <ul className="mt-6 flex flex-col gap-3 text-brand-smoke">
           {business?.address && <li>{business.address}</li>}
 
           {whatsappLink && (
@@ -60,10 +60,10 @@ export function ContactSection({ business }: ContactSectionProps) {
 
       {hours.length > 0 && (
         <Reveal delay={0.1}>
-          <h3 className="font-display font-semibold text-brand-black">
+          <h3 className="font-display font-semibold text-brand-cream">
             Horário de funcionamento
           </h3>
-          <dl className="mt-4 flex flex-col gap-1 font-label text-sm text-neutral-600">
+          <dl className="mt-4 flex flex-col gap-1 font-label text-sm text-brand-smoke">
             {hours.map(({ label, value }) => (
               <div key={label} className="flex justify-between gap-4">
                 <dt>{label}</dt>

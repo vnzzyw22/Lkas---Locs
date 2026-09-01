@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "framer-motion";
-import gsap from "gsap";
 import { Reveal } from "./reveal";
 import type { GalleryPhoto } from "@/lib/supabase/types";
 
@@ -23,27 +22,32 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
 
     let cleanup = () => {};
 
-    import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
-      gsap.registerPlugin(ScrollTrigger);
+    // gsap + ScrollTrigger só entram aqui dentro, pós-montagem —
+    // importados dinamicamente pra não engordar o bundle inicial.
+    Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(
+      ([{ default: gsap }, { ScrollTrigger }]) => {
+        gsap.registerPlugin(ScrollTrigger);
 
-      const ctx = gsap.context(() => {
-        const cards = gridRef.current?.querySelectorAll("[data-parallax-card]");
-        cards?.forEach((card, i) => {
-          gsap.to(card, {
-            yPercent: i % 2 === 0 ? -8 : 8,
-            ease: "none",
-            scrollTrigger: {
-              trigger: gridRef.current,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: true,
-            },
+        const ctx = gsap.context(() => {
+          const cards =
+            gridRef.current?.querySelectorAll("[data-parallax-card]");
+          cards?.forEach((card, i) => {
+            gsap.to(card, {
+              yPercent: i % 2 === 0 ? -8 : 8,
+              ease: "none",
+              scrollTrigger: {
+                trigger: gridRef.current,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true,
+              },
+            });
           });
-        });
-      }, gridRef);
+        }, gridRef);
 
-      cleanup = () => ctx.revert();
-    });
+        cleanup = () => ctx.revert();
+      },
+    );
 
     return () => cleanup();
   }, [reduceMotion]);
