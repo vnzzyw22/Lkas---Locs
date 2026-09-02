@@ -14,6 +14,9 @@
   --color-brand-cream: #f3ede3; /* texto sobre fundo escuro */
   --color-brand-oxblood: #4a1116; /* profundidade — gradientes/sombra */
   --color-brand-smoke: #9c948b; /* texto secundário sobre fundo escuro */
+  --color-brand-paper: #f5f3ee; /* off-white quente pra fundo de seção clara
+    (Serviços) — diferente de --color-brand-cream, que é texto sobre fundo
+    escuro (Hero/Brand Outro), não fundo de seção clara */
 }
 
 @theme inline {
@@ -25,6 +28,7 @@
   --color-brand-cream: var(--color-brand-cream);
   --color-brand-oxblood: var(--color-brand-oxblood);
   --color-brand-smoke: var(--color-brand-smoke);
+  --color-brand-paper: var(--color-brand-paper);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
   --font-label: var(--font-label);

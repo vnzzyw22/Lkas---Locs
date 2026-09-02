@@ -58,14 +58,14 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
         <Reveal key={photo.id} delay={(i % 3) * 0.08}>
           <div
             data-parallax-card
-            className="relative aspect-square overflow-hidden rounded-xl bg-neutral-200"
+            className="relative aspect-square overflow-hidden rounded-2xl bg-neutral-200 ring-1 ring-brand-black/5"
           >
             <Image
               src={photo.url}
               alt={photo.category ?? "Foto da Lkas Locs"}
               fill
               sizes="(min-width: 640px) 33vw, 50vw"
-              className="object-cover transition hover:scale-105"
+              className="object-cover transition duration-500 hover:scale-105"
             />
           </div>
         </Reveal>

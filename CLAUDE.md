@@ -403,6 +403,38 @@ antes de mexer nisso de novo.
     tentativas), então não dá pra escrever os testes com confiança de que
     rodam. Retomar quando o Playwright estiver disponível — não avançar
     pra Fase 7 sem isso.
+  - ✅ **Redesign de Serviços/Rodapé/Galeria** (2026-09-02): primeiro serviço
+    virou "abertura" em largura cheia com foto de fundo (`LEAD_PHOTO`,
+    `foto-tranças-1.jpg`) e tipografia bem maior; demais serviços em grade
+    sem caixa/borda, separados só por espaço negativo, com numeral
+    decorativo (`aria-hidden`) e CTA com seta animada no hover. Rodapé
+    ganhou logo + wordmark + linha divisória antes do copyright. Galeria
+    ganhou título contorno+preenchido (mesmo tratamento de Serviços) e
+    cards com `rounded-2xl`/ring sutil. Novo token `--color-brand-paper`
+    (off-white quente) em `globals.css` pro fundo dessas seções — diferente
+    de `--color-brand-cream` (que é texto sobre fundo escuro, não fundo de
+    seção clara). Revisado por screenshot via Playwright antes do commit.
+  - 📋 **Pendências para a próxima sessão** (registradas em 2026-09-02, cliente pediu pra retomar amanhã):
+    - **Rodapé:** ajustar mais — o que foi feito na Fase 6 (logo + linha
+      divisória) não é o suficiente.
+    - **Navbar:** estilizar (ainda não especificado o quê exatamente —
+      alinhar com o cliente no início da sessão).
+    - **1º Serviço:** o card "abertura" em largura cheia (redesign de
+      2026-09-02, ver acima) precisa de ajuste — cliente não deu detalhe
+      ainda, perguntar o que incomoda antes de mexer.
+    - **Painel admin:** mexer (sem escopo definido ainda).
+    - **Página de agendamento (`/agendar`):** mexer (sem escopo definido
+      ainda).
+    - **Galeria:** arrumar mais — o redesign do título/cards acima não
+      resolveu tudo.
+    - Também em aberto de sessões anteriores, ainda não retomado: novos
+      decalques nas silhuetas que o cliente mandou (`exemplo-decalque*`
+      em `public/imagens`) substituindo os atuais (`decal-locs-01/02`,
+      derivados de foto), reposicionados conforme a marcação manual do
+      cliente (`posição-que-deve-ficar-os-decalques-que-eu-adicionei.png`);
+      e confirmar se a tela preta de `Print-do-meu-celular.jpg` ainda
+      acontece ou já foi resolvida pela remoção do vídeo de fundo (ver
+      Fase 6 > Brand Outro).
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
