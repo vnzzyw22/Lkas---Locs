@@ -1,4 +1,5 @@
 import { FinanceView } from "@/components/admin/finance-view";
+import { pageSubtitleClass, pageTitleClass } from "@/components/admin/theme";
 import { currentMonthISO } from "@/lib/date";
 import { getTransactionsForRange } from "@/lib/supabase/admin-queries";
 
@@ -22,8 +23,8 @@ export default async function FinanceiroPage(
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-brand-black">Financeiro</h1>
-      <p className="mt-2 text-sm text-neutral-500">
+      <h1 className={pageTitleClass}>Financeiro</h1>
+      <p className={pageSubtitleClass}>
         Entradas e saídas simples — não é um sistema contábil.
       </p>
       <FinanceView monthISO={monthISO} transactions={transactions} />

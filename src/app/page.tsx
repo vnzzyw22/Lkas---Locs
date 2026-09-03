@@ -1,6 +1,6 @@
 import { AboutSection } from "@/components/site/about-section";
-import { BrandOutro } from "@/components/site/brand-outro";
 import { ContactSection } from "@/components/site/contact-section";
+import { FaqSection } from "@/components/site/faq-section";
 import { Footer } from "@/components/site/footer";
 import { GallerySection } from "@/components/site/gallery-section";
 import { Hero } from "@/components/site/hero";
@@ -22,21 +22,22 @@ export default async function Home() {
   return (
     <>
       <Navbar />
+      {/* Sanduíche: Hero escura (abertura) -> Serviços/Galeria claras
+          (conteúdo funcional) -> Sobre escura (transição, ecoa a Hero) ->
+          FAQ claro (pausa antes do fechamento) -> Contato + Rodapé escuros
+          (fechamento). Cada seção carrega seu próprio fundo — ver
+          DESIGN.md. Footer fica fora do <main> pra manter o papel de
+          landmark "contentinfo" (perde esse papel se aninhado dentro de
+          main). */}
       <main id="conteudo" className="flex flex-1 flex-col">
         <Hero business={business} photos={photos} />
         <ServicesSection services={services} />
         <GallerySection photos={photos} />
-      </main>
-      {/* Sanduíche: Hero escura (abertura) -> Serviços/Galeria clara
-          (conteúdo funcional) -> aqui, escura de novo (fechamento), com o
-          vídeo real da marca ao fundo — ver DESIGN.md > Decalque/Brand
-          Outro. Fora do <main> pra o Footer manter o papel de landmark
-          "contentinfo" (perde esse papel se aninhado dentro de main). */}
-      <BrandOutro>
         <AboutSection />
+        <FaqSection />
         <ContactSection business={business} />
-        <Footer />
-      </BrandOutro>
+      </main>
+      <Footer business={business} services={services} />
     </>
   );
 }

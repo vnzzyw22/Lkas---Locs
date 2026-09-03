@@ -12,11 +12,19 @@ const links = [
   { href: "#contato", label: "Contato" },
 ];
 
+// Tipografia da Navbar (2026-09-03), a pedido do cliente: Montserrat em
+// vez do mono (`font-label`) do resto do site, caixa alta, peso 700,
+// tracking de 1px — "aspecto premium". Dropdown de "Serviços" (testado
+// antes) foi removido a pedido do cliente: menu simples, todos os links
+// direto na mesma linha, sem submenu.
+const navLinkClass =
+  "font-nav text-xs font-bold tracking-[1px] uppercase transition-colors duration-200 hover:text-brand-red";
+
 export function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-brand-ink/95 backdrop-blur">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-brand-ink/75 backdrop-blur-md">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
         <Link href="#topo" className="flex items-center gap-2.5">
           <Image
@@ -31,13 +39,10 @@ export function Navbar() {
           </span>
         </Link>
 
-        <ul className="hidden items-center gap-7 font-label text-xs tracking-widest text-brand-smoke uppercase md:flex">
+        <ul className={`hidden items-center gap-7 text-brand-smoke md:flex`}>
           {links.map((link) => (
             <li key={link.href}>
-              <a
-                href={link.href}
-                className="transition-colors hover:text-brand-cream"
-              >
+              <a href={link.href} className={navLinkClass}>
                 {link.label}
               </a>
             </li>
@@ -68,21 +73,22 @@ export function Navbar() {
       </nav>
 
       {open && (
-        <div className="flex flex-col gap-1 border-t border-white/10 bg-brand-ink px-6 py-3 font-label text-xs tracking-widest text-brand-smoke uppercase md:hidden">
+        <div className="flex flex-col gap-1 border-t border-white/10 bg-brand-ink px-6 py-3 text-brand-smoke md:hidden">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="block py-2 transition-colors hover:text-brand-cream"
+              className={`block py-2 ${navLinkClass}`}
             >
               {link.label}
             </a>
           ))}
+
           <Link
             href="/agendar"
             onClick={() => setOpen(false)}
-            className="mt-2 rounded-full bg-brand-red px-4 py-2 text-center text-brand-cream normal-case"
+            className="mt-2 rounded-full bg-brand-red px-4 py-2 text-center font-label text-xs font-medium tracking-widest text-brand-cream normal-case"
           >
             Agendar horário
           </Link>

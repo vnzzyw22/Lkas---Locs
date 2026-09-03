@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { updateBusinessSettings } from "@/app/admin/(painel)/configuracoes/actions";
+import {
+  buttonPrimaryClass,
+  fieldClass,
+  labelClass,
+  sectionTitleClass,
+} from "@/components/admin/theme";
 import { DAY_LABELS, DAY_ORDER } from "@/lib/business-hours";
 import type { BusinessHours, BusinessSettings } from "@/lib/supabase/types";
 
@@ -87,7 +93,7 @@ export function SettingsForm({ business }: SettingsFormProps) {
   return (
     <form onSubmit={handleSubmit} className="mt-6 flex max-w-xl flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <label htmlFor="name" className="text-sm font-medium text-brand-black">
+        <label htmlFor="name" className={labelClass}>
           Nome do negócio
         </label>
         <input
@@ -99,12 +105,12 @@ export function SettingsForm({ business }: SettingsFormProps) {
             setName(e.target.value);
             setSaved(false);
           }}
-          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+          className={fieldClass}
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="whatsapp" className="text-sm font-medium text-brand-black">
+        <label htmlFor="whatsapp" className={labelClass}>
           WhatsApp (com DDI e DDD, ex: 5544999999999)
         </label>
         <input
@@ -116,15 +122,12 @@ export function SettingsForm({ business }: SettingsFormProps) {
             setWhatsapp(e.target.value);
             setSaved(false);
           }}
-          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+          className={fieldClass}
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <label
-          htmlFor="instagram"
-          className="text-sm font-medium text-brand-black"
-        >
+        <label htmlFor="instagram" className={labelClass}>
           Instagram (@usuário)
         </label>
         <input
@@ -136,12 +139,12 @@ export function SettingsForm({ business }: SettingsFormProps) {
             setInstagram(e.target.value);
             setSaved(false);
           }}
-          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+          className={fieldClass}
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="address" className="text-sm font-medium text-brand-black">
+        <label htmlFor="address" className={labelClass}>
           Endereço
         </label>
         <input
@@ -152,18 +155,19 @@ export function SettingsForm({ business }: SettingsFormProps) {
             setAddress(e.target.value);
             setSaved(false);
           }}
-          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+          className={fieldClass}
         />
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm font-medium text-brand-black">
-          Horário de funcionamento
-        </span>
+        <span className={sectionTitleClass}>Horário de funcionamento</span>
 
         {DAY_ORDER.map((day) => (
-          <div key={day} className="flex flex-wrap items-center gap-3 text-sm">
-            <span className="w-20 shrink-0 text-neutral-600">
+          <div
+            key={day}
+            className="flex flex-wrap items-center gap-3 text-sm text-white/70"
+          >
+            <span className="w-20 shrink-0 text-white/50">
               {DAY_LABELS[day]}
             </span>
 
@@ -184,14 +188,14 @@ export function SettingsForm({ business }: SettingsFormProps) {
                   type="time"
                   value={hours[day].open}
                   onChange={(e) => updateDay(day, { open: e.target.value })}
-                  className="rounded-lg border border-neutral-200 px-2 py-1"
+                  className={fieldClass}
                 />
-                <span className="text-neutral-400">até</span>
+                <span className="text-white/30">até</span>
                 <input
                   type="time"
                   value={hours[day].close}
                   onChange={(e) => updateDay(day, { close: e.target.value })}
-                  className="rounded-lg border border-neutral-200 px-2 py-1"
+                  className={fieldClass}
                 />
               </>
             )}
@@ -199,13 +203,13 @@ export function SettingsForm({ business }: SettingsFormProps) {
         ))}
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {saved && <p className="text-sm text-green-700">Configurações salvas.</p>}
+      {error && <p className="text-sm text-red-400">{error}</p>}
+      {saved && <p className="text-sm text-green-400">Configurações salvas.</p>}
 
       <button
         type="submit"
         disabled={submitting}
-        className="self-start rounded-full bg-brand-red px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+        className={`self-start ${buttonPrimaryClass}`}
       >
         {submitting ? "Salvando..." : "Salvar configurações"}
       </button>

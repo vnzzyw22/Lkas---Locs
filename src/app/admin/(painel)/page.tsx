@@ -5,6 +5,14 @@ import {
   getAppointmentsForRange,
   getTransactionsForRange,
 } from "@/lib/supabase/admin-queries";
+import {
+  badgeClass,
+  cardClass,
+  linkPrimaryClass,
+  pageSubtitleClass,
+  pageTitleClass,
+  sectionTitleClass,
+} from "@/components/admin/theme";
 import type { AdminAppointment, AppointmentStatus } from "@/lib/supabase/types";
 
 const STATUS_LABEL: Record<AppointmentStatus, string> = {
@@ -13,10 +21,10 @@ const STATUS_LABEL: Record<AppointmentStatus, string> = {
   cancelled: "Cancelado",
 };
 
-const STATUS_CLASS: Record<AppointmentStatus, string> = {
-  pending: "bg-amber-100 text-amber-700",
-  confirmed: "bg-green-100 text-green-700",
-  cancelled: "bg-neutral-100 text-neutral-500",
+const STATUS_TONE: Record<AppointmentStatus, "amber" | "green" | "neutral"> = {
+  pending: "amber",
+  confirmed: "green",
+  cancelled: "neutral",
 };
 
 function timeLabel(iso: string) {
@@ -42,17 +50,17 @@ function lastDayOfMonth(monthISO: string) {
 
 function AppointmentRow({ appointment }: { appointment: AdminAppointment }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 p-3 text-sm">
-      <span className="font-medium text-brand-black">
+    <div
+      className={`flex flex-wrap items-center gap-3 text-sm text-white/80 ${cardClass}`}
+    >
+      <span className="font-medium text-white">
         {dateLabel(appointment.starts_at)} {timeLabel(appointment.starts_at)}
       </span>
       <span>{appointment.client?.name ?? "Cliente removido"}</span>
-      <span className="text-neutral-500">
+      <span className="text-white/50">
         {appointment.service?.name ?? "Serviço removido"}
       </span>
-      <span
-        className={`ml-auto rounded-full px-2 py-0.5 text-xs ${STATUS_CLASS[appointment.status]}`}
-      >
+      <span className={`ml-auto ${badgeClass(STATUS_TONE[appointment.status])}`}>
         {STATUS_LABEL[appointment.status]}
       </span>
     </div>
@@ -97,26 +105,26 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-xl font-bold text-brand-black">Dashboard</h1>
-        <p className="mt-2 text-sm text-neutral-500">Resumo do negócio.</p>
+        <h1 className={pageTitleClass}>Dashboard</h1>
+        <p className={pageSubtitleClass}>Resumo do negócio.</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-xl border border-neutral-200 p-4">
-          <p className="text-xs text-neutral-500">Entradas do mês</p>
-          <p className="text-lg font-bold text-green-700">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className={cardClass}>
+          <p className="text-xs text-white/50">Entradas do mês</p>
+          <p className="mt-1 text-lg font-bold text-green-400">
             {formatPrice(income)}
           </p>
         </div>
-        <div className="rounded-xl border border-neutral-200 p-4">
-          <p className="text-xs text-neutral-500">Saídas do mês</p>
-          <p className="text-lg font-bold text-red-600">
+        <div className={cardClass}>
+          <p className="text-xs text-white/50">Saídas do mês</p>
+          <p className="mt-1 text-lg font-bold text-red-400">
             {formatPrice(expense)}
           </p>
         </div>
-        <div className="rounded-xl border border-neutral-200 p-4">
-          <p className="text-xs text-neutral-500">Saldo do mês</p>
-          <p className="text-lg font-bold text-brand-black">
+        <div className={cardClass}>
+          <p className="text-xs text-white/50">Saldo do mês</p>
+          <p className="mt-1 text-lg font-bold text-white">
             {formatPrice(income - expense)}
           </p>
         </div>
@@ -124,19 +132,14 @@ export default async function DashboardPage() {
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-brand-black">Hoje</h2>
-          <Link
-            href="/admin/agenda"
-            className="text-sm text-brand-red hover:underline"
-          >
+          <h2 className={sectionTitleClass}>Hoje</h2>
+          <Link href="/admin/agenda" className={linkPrimaryClass}>
             Ver agenda
           </Link>
         </div>
 
         {activeTodayAppointments.length === 0 ? (
-          <p className="text-sm text-neutral-500">
-            Nenhum atendimento hoje.
-          </p>
+          <p className="text-sm text-white/40">Nenhum atendimento hoje.</p>
         ) : (
           activeTodayAppointments.map((a) => (
             <AppointmentRow key={a.id} appointment={a} />
@@ -145,14 +148,10 @@ export default async function DashboardPage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="font-semibold text-brand-black">
-          Próximos 7 dias
-        </h2>
+        <h2 className={sectionTitleClass}>Próximos 7 dias</h2>
 
         {activeUpcomingAppointments.length === 0 ? (
-          <p className="text-sm text-neutral-500">
-            Nenhum atendimento agendado.
-          </p>
+          <p className="text-sm text-white/40">Nenhum atendimento agendado.</p>
         ) : (
           activeUpcomingAppointments.map((a) => (
             <AppointmentRow key={a.id} appointment={a} />

@@ -7,6 +7,16 @@ import {
   deleteService,
   updateService,
 } from "@/app/admin/(painel)/servicos/actions";
+import {
+  badgeClass,
+  buttonPrimaryClass,
+  buttonSecondaryClass,
+  cardClass,
+  fieldClass,
+  labelClass,
+  linkDangerClass,
+  linkPrimaryClass,
+} from "@/components/admin/theme";
 import { formatDuration, formatPrice } from "@/lib/format";
 import type { AdminService } from "@/lib/supabase/types";
 
@@ -123,7 +133,7 @@ export function ServicesManager({ services }: ServicesManagerProps) {
         <button
           type="button"
           onClick={startCreate}
-          className="self-start rounded-full bg-brand-red px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+          className={`self-start ${buttonPrimaryClass}`}
         >
           + Novo serviço
         </button>
@@ -132,56 +142,50 @@ export function ServicesManager({ services }: ServicesManagerProps) {
       {editingId !== null && (
         <form
           onSubmit={handleSubmit}
-          className="flex max-w-lg flex-col gap-4 rounded-xl border border-neutral-200 p-5"
+          className={`flex max-w-lg flex-col gap-4 ${cardClass}`}
         >
-          <h2 className="font-semibold text-brand-black">
+          <h2 className="font-nav text-sm font-bold tracking-widest text-white uppercase">
             {editingId === "new" ? "Novo serviço" : "Editar serviço"}
           </h2>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-brand-black">Nome</label>
+            <label className={labelClass}>Nome</label>
             <input
               type="text"
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+              className={fieldClass}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-brand-black">
-              Descrição (opcional)
-            </label>
+            <label className={labelClass}>Descrição (opcional)</label>
             <textarea
               rows={2}
               value={form.description}
               onChange={(e) =>
                 setForm({ ...form, description: e.target.value })
               }
-              className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+              className={fieldClass}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-brand-black">
-                Preço (R$)
-              </label>
+              <label className={labelClass}>Preço (R$)</label>
               <input
                 type="text"
                 inputMode="decimal"
                 required
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
-                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+                className={fieldClass}
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-brand-black">
-                Duração (min)
-              </label>
+              <label className={labelClass}>Duração (min)</label>
               <input
                 type="number"
                 min={1}
@@ -190,27 +194,25 @@ export function ServicesManager({ services }: ServicesManagerProps) {
                 onChange={(e) =>
                   setForm({ ...form, durationMinutes: e.target.value })
                 }
-                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+                className={fieldClass}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 items-end">
+          <div className="grid grid-cols-2 items-end gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-brand-black">
-                Ordem de exibição
-              </label>
+              <label className={labelClass}>Ordem de exibição</label>
               <input
                 type="number"
                 value={form.displayOrder}
                 onChange={(e) =>
                   setForm({ ...form, displayOrder: e.target.value })
                 }
-                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+                className={fieldClass}
               />
             </div>
 
-            <label className="flex items-center gap-2 pb-2 text-sm">
+            <label className="flex items-center gap-2 pb-2 text-sm text-white/70">
               <input
                 type="checkbox"
                 checked={form.active}
@@ -222,88 +224,60 @@ export function ServicesManager({ services }: ServicesManagerProps) {
             </label>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
           <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-full bg-brand-red px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-            >
+            <button type="submit" disabled={submitting} className={buttonPrimaryClass}>
               {submitting ? "Salvando..." : "Salvar"}
             </button>
-            <button
-              type="button"
-              onClick={cancelEdit}
-              className="rounded-full border border-neutral-200 px-5 py-2 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-50"
-            >
+            <button type="button" onClick={cancelEdit} className={buttonSecondaryClass}>
               Cancelar
             </button>
           </div>
         </form>
       )}
 
-      {rowError && <p className="text-sm text-red-600">{rowError}</p>}
+      {rowError && <p className="text-sm text-red-400">{rowError}</p>}
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-max text-left text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200 text-neutral-500">
-              <th className="py-2 pr-4">Nome</th>
-              <th className="py-2 pr-4">Preço</th>
-              <th className="py-2 pr-4">Duração</th>
-              <th className="py-2 pr-4">Ordem</th>
-              <th className="py-2 pr-4">Status</th>
-              <th className="py-2 pr-4">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {services.map((service) => (
-              <tr key={service.id} className="border-b border-neutral-100">
-                <td className="py-2 pr-4 font-medium text-brand-black">
-                  {service.name}
-                </td>
-                <td className="py-2 pr-4">{formatPrice(service.price)}</td>
-                <td className="py-2 pr-4">
-                  {formatDuration(service.duration_minutes)}
-                </td>
-                <td className="py-2 pr-4">{service.display_order}</td>
-                <td className="py-2 pr-4">
-                  <span
-                    className={
-                      service.active
-                        ? "rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700"
-                        : "rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500"
-                    }
-                  >
-                    {service.active ? "Ativo" : "Inativo"}
-                  </span>
-                </td>
-                <td className="py-2 pr-4">
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(service)}
-                      className="text-brand-red hover:underline"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(service)}
-                      className="text-neutral-500 hover:underline"
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="flex flex-col gap-2">
+        {services.map((service) => (
+          <div
+            key={service.id}
+            className={`flex flex-wrap items-center gap-x-6 gap-y-2 text-sm ${cardClass}`}
+          >
+            <span className="min-w-32 font-medium text-white">
+              {service.name}
+            </span>
+            <span className="text-white/60">{formatPrice(service.price)}</span>
+            <span className="text-white/60">
+              {formatDuration(service.duration_minutes)}
+            </span>
+            <span className="text-white/40">Ordem {service.display_order}</span>
+            <span className={badgeClass(service.active ? "green" : "neutral")}>
+              {service.active ? "Ativo" : "Inativo"}
+            </span>
+
+            <div className="ml-auto flex gap-4">
+              <button
+                type="button"
+                onClick={() => startEdit(service)}
+                className={linkPrimaryClass}
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(service)}
+                className={linkDangerClass}
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        ))}
 
         {services.length === 0 && (
-          <p className="py-4 text-sm text-neutral-500">
+          <p className="py-4 text-sm text-white/40">
             Nenhum serviço cadastrado ainda.
           </p>
         )}

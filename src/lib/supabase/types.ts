@@ -50,7 +50,7 @@ export interface AdminAppointment {
   status: AppointmentStatus;
   notes: string | null;
   client: { id: string; name: string; whatsapp: string | null } | null;
-  service: { id: string; name: string } | null;
+  service: { id: string; name: string; price: number } | null;
 }
 
 export interface AdminBlockedSlot {

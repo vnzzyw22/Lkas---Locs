@@ -18,10 +18,8 @@ export function ContactSection({ business }: ContactSectionProps) {
   const hours = business ? formatBusinessHours(business.business_hours) : [];
 
   return (
-    <section
-      id="contato"
-      className="mx-auto grid max-w-5xl gap-10 px-6 py-24 sm:grid-cols-2"
-    >
+    <section id="contato" className="bg-brand-ink">
+      <div className="mx-auto grid max-w-5xl gap-10 px-6 py-24 sm:grid-cols-2">
       <Reveal>
         <h2 className="font-display text-2xl font-bold text-brand-cream sm:text-3xl">
           Contato
@@ -73,6 +71,7 @@ export function ContactSection({ business }: ContactSectionProps) {
           </dl>
         </Reveal>
       )}
+      </div>
     </section>
   );
 }

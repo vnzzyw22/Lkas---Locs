@@ -1,4 +1,5 @@
 import { ServicesManager } from "@/components/admin/services-manager";
+import { pageSubtitleClass, pageTitleClass } from "@/components/admin/theme";
 import { getAllServices } from "@/lib/supabase/admin-queries";
 
 export default async function ServicosPage() {
@@ -6,8 +7,8 @@ export default async function ServicosPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-brand-black">Serviços</h1>
-      <p className="mt-2 text-sm text-neutral-500">
+      <h1 className={pageTitleClass}>Serviços</h1>
+      <p className={pageSubtitleClass}>
         Preço e duração aparecem no site e no agendamento assim que salvos.
       </p>
       <ServicesManager services={services} />

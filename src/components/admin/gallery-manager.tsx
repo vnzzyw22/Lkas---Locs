@@ -8,6 +8,13 @@ import {
   updateGalleryPhoto,
   uploadGalleryPhoto,
 } from "@/app/admin/(painel)/galeria/actions";
+import {
+  buttonPrimaryClass,
+  buttonSecondaryClass,
+  cardClass,
+  fieldClass,
+  labelClass,
+} from "@/components/admin/theme";
 import type { AdminGalleryPhoto } from "@/lib/supabase/types";
 
 interface GalleryManagerProps {
@@ -46,8 +53,8 @@ function PhotoCard({ photo }: { photo: AdminGalleryPhoto }) {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 p-3">
-      <div className="relative aspect-square overflow-hidden rounded-lg bg-neutral-100">
+    <div className={`flex flex-col gap-2 ${cardClass}`}>
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-white/5">
         <Image
           src={photo.url}
           alt={category || "Foto da galeria"}
@@ -62,11 +69,11 @@ function PhotoCard({ photo }: { photo: AdminGalleryPhoto }) {
         placeholder="Categoria"
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="rounded-lg border border-neutral-200 px-2 py-1 text-sm"
+        className={fieldClass}
       />
 
       <div className="flex items-center gap-2">
-        <label className="flex items-center gap-1.5 text-xs">
+        <label className="flex items-center gap-1.5 text-xs text-white/70">
           <input
             type="checkbox"
             checked={published}
@@ -78,26 +85,26 @@ function PhotoCard({ photo }: { photo: AdminGalleryPhoto }) {
           type="number"
           value={displayOrder}
           onChange={(e) => setDisplayOrder(e.target.value)}
-          className="w-16 rounded-lg border border-neutral-200 px-2 py-1 text-xs"
+          className={`w-16 ${fieldClass}`}
           title="Ordem de exibição"
         />
       </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-red-400">{error}</p>}
 
       <div className="flex gap-2">
         <button
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="flex-1 rounded-full bg-brand-red px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+          className={`flex-1 text-center ${buttonPrimaryClass}`}
         >
           {saving ? "Salvando..." : "Salvar"}
         </button>
         <button
           type="button"
           onClick={handleDelete}
-          className="rounded-full border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-600 transition hover:bg-neutral-50"
+          className={buttonSecondaryClass}
         >
           Excluir
         </button>
@@ -134,38 +141,32 @@ export function GalleryManager({ photos }: GalleryManagerProps) {
       <form
         ref={formRef}
         onSubmit={handleUpload}
-        className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 p-4"
+        className={`flex flex-wrap items-end gap-3 ${cardClass}`}
       >
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-neutral-600">Foto</label>
-          <input type="file" name="file" accept="image/*" required />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-neutral-600">
-            Categoria (opcional)
-          </label>
+        <div className="flex flex-col gap-1.5">
+          <label className={labelClass}>Foto</label>
           <input
-            type="text"
-            name="category"
-            className="rounded-lg border border-neutral-200 px-2 py-1 text-sm"
+            type="file"
+            name="file"
+            accept="image/*"
+            required
+            className="text-sm text-white/70 file:mr-3 file:rounded-full file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:font-bold file:tracking-widest file:text-white file:uppercase"
           />
         </div>
-        <button
-          type="submit"
-          disabled={uploading}
-          className="rounded-full bg-brand-red px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-        >
+        <div className="flex flex-col gap-1.5">
+          <label className={labelClass}>Categoria (opcional)</label>
+          <input type="text" name="category" className={fieldClass} />
+        </div>
+        <button type="submit" disabled={uploading} className={buttonPrimaryClass}>
           {uploading ? "Enviando..." : "Enviar foto"}
         </button>
         {uploadError && (
-          <p className="w-full text-sm text-red-600">{uploadError}</p>
+          <p className="w-full text-sm text-red-400">{uploadError}</p>
         )}
       </form>
 
       {photos.length === 0 ? (
-        <p className="text-sm text-neutral-500">
-          Nenhuma foto na galeria ainda.
-        </p>
+        <p className="text-sm text-white/40">Nenhuma foto na galeria ainda.</p>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {photos.map((photo) => (

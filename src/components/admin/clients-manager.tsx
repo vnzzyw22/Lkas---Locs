@@ -6,6 +6,15 @@ import {
   deleteClient,
   updateClient,
 } from "@/app/admin/(painel)/clientes/actions";
+import {
+  buttonPrimaryClass,
+  buttonSecondaryClass,
+  cardClass,
+  fieldClass,
+  labelClass,
+  linkDangerClass,
+  linkPrimaryClass,
+} from "@/components/admin/theme";
 import type { AdminClient } from "@/lib/supabase/types";
 
 interface ClientsManagerProps {
@@ -83,65 +92,59 @@ export function ClientsManager({ clients }: ClientsManagerProps) {
         placeholder="Buscar por nome ou WhatsApp..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+        className={`max-w-sm ${fieldClass}`}
       />
 
       {editingId !== null && (
         <form
           onSubmit={handleSubmit}
-          className="flex max-w-lg flex-col gap-4 rounded-xl border border-neutral-200 p-5"
+          className={`flex max-w-lg flex-col gap-4 ${cardClass}`}
         >
-          <h2 className="font-semibold text-brand-black">Editar cliente</h2>
+          <h2 className="font-nav text-sm font-bold tracking-widest text-white uppercase">
+            Editar cliente
+          </h2>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-brand-black">Nome</label>
+            <label className={labelClass}>Nome</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+              className={fieldClass}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-brand-black">
-              WhatsApp
-            </label>
+            <label className={labelClass}>WhatsApp</label>
             <input
               type="text"
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
-              className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+              className={fieldClass}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-brand-black">
-              Observações
-            </label>
+            <label className={labelClass}>Observações</label>
             <textarea
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+              className={fieldClass}
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
           <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-full bg-brand-red px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-            >
+            <button type="submit" disabled={submitting} className={buttonPrimaryClass}>
               {submitting ? "Salvando..." : "Salvar"}
             </button>
             <button
               type="button"
               onClick={() => setEditingId(null)}
-              className="rounded-full border border-neutral-200 px-5 py-2 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-50"
+              className={buttonSecondaryClass}
             >
               Cancelar
             </button>
@@ -150,58 +153,45 @@ export function ClientsManager({ clients }: ClientsManagerProps) {
       )}
 
       {editingId === null && error && (
-        <p className="text-sm text-red-600">{error}</p>
+        <p className="text-sm text-red-400">{error}</p>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-max text-left text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200 text-neutral-500">
-              <th className="py-2 pr-4">Nome</th>
-              <th className="py-2 pr-4">WhatsApp</th>
-              <th className="py-2 pr-4">Observações</th>
-              <th className="py-2 pr-4">Desde</th>
-              <th className="py-2 pr-4">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((client) => (
-              <tr key={client.id} className="border-b border-neutral-100">
-                <td className="py-2 pr-4 font-medium text-brand-black">
-                  {client.name}
-                </td>
-                <td className="py-2 pr-4">{client.whatsapp ?? "—"}</td>
-                <td className="py-2 pr-4 text-neutral-500">
-                  {client.notes ?? "—"}
-                </td>
-                <td className="py-2 pr-4 text-neutral-500">
-                  {formatDate(client.created_at)}
-                </td>
-                <td className="py-2 pr-4">
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(client)}
-                      className="text-brand-red hover:underline"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(client)}
-                      className="text-neutral-500 hover:underline"
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="flex flex-col gap-2">
+        {filtered.map((client) => (
+          <div
+            key={client.id}
+            className={`flex flex-wrap items-center gap-x-6 gap-y-2 text-sm ${cardClass}`}
+          >
+            <span className="min-w-32 font-medium text-white">
+              {client.name}
+            </span>
+            <span className="text-white/60">{client.whatsapp ?? "—"}</span>
+            <span className="text-white/40">{client.notes ?? "—"}</span>
+            <span className="text-white/40">
+              Desde {formatDate(client.created_at)}
+            </span>
+
+            <div className="ml-auto flex gap-4">
+              <button
+                type="button"
+                onClick={() => startEdit(client)}
+                className={linkPrimaryClass}
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(client)}
+                className={linkDangerClass}
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        ))}
 
         {filtered.length === 0 && (
-          <p className="py-4 text-sm text-neutral-500">
+          <p className="py-4 text-sm text-white/40">
             {clients.length === 0
               ? "Nenhum cliente cadastrado ainda."
               : "Nenhum cliente encontrado."}

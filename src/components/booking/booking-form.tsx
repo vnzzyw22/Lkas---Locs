@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createAppointment, getAvailableSlots } from "@/app/agendar/actions";
 import { todayISO } from "@/lib/date";
 import { formatDuration, formatPrice } from "@/lib/format";
+import { ServiceSelect } from "./service-select";
 import type { Service } from "@/lib/supabase/types";
 
 interface BookingFormProps {
@@ -17,6 +18,19 @@ interface SlotPickerProps {
   selectedTime: string | null;
   onSelect: (time: string) => void;
 }
+
+// Estilo compartilhado dos campos "Serviço"/"Data" (2026-09-03, redesign
+// pedido pelo cliente para a identidade escura/premium da marca) — cinza
+// bem escuro sobre o fundo preto da página, sem borda visível em repouso,
+// borda vermelha só no foco. `[color-scheme:dark]` faz o Chrome/Firefox
+// desenharem o ícone nativo do calendário (input date) e a lista do
+// select em tema escuro — sem isso o ícone do calendário sai escuro
+// sobre fundo escuro, quase invisível.
+const fieldClass =
+  "rounded-lg border border-transparent bg-white/[0.06] px-3 py-2.5 text-sm text-white [color-scheme:dark] transition-colors duration-200 outline-none focus:border-brand-red";
+
+const labelClass =
+  "font-label text-xs font-bold tracking-widest text-white uppercase";
 
 function SlotPicker({
   serviceId,
@@ -43,11 +57,11 @@ function SlotPicker({
     };
   }, [serviceId, dateISO]);
 
-  if (loading) return <p className="text-sm text-neutral-500">Carregando horários...</p>;
-  if (error) return <p className="text-sm text-red-600">{error}</p>;
+  if (loading) return <p className="text-sm text-brand-smoke">Carregando horários...</p>;
+  if (error) return <p className="text-sm text-red-400">{error}</p>;
   if (!slots || slots.length === 0) {
     return (
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-brand-smoke">
         Nenhum horário disponível nessa data. Tente outro dia.
       </p>
     );
@@ -61,10 +75,10 @@ function SlotPicker({
           type="button"
           aria-pressed={selectedTime === slot}
           onClick={() => onSelect(slot)}
-          className={`rounded-lg border px-3 py-2 text-sm transition ${
+          className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
             selectedTime === slot
               ? "border-brand-red bg-brand-red text-white"
-              : "border-black/10 hover:border-brand-red"
+              : "border-transparent bg-white/[0.06] text-brand-smoke hover:border-brand-red hover:text-white hover:shadow-[0_0_12px_rgba(200,16,46,0.35)]"
           }`}
         >
           {slot}
@@ -133,11 +147,11 @@ export function BookingForm({
 
   if (success) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-black/5 p-8 text-center">
-        <h2 className="text-lg font-semibold text-brand-black">
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-white/10 bg-white/[0.04] p-8 text-center">
+        <h2 className="font-display text-lg font-bold text-white uppercase">
           Agendamento enviado!
         </h2>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-brand-smoke">
           Falta pouco: confirme o pedido pelo WhatsApp para garantir seu
           horário. Ele fica pendente até o retorno da Lkas Locs.
         </p>
@@ -146,7 +160,7 @@ export function BookingForm({
             href={success.whatsappLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full bg-brand-red px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+            className="rounded-full bg-brand-red px-6 py-3 text-sm font-bold tracking-wide text-white uppercase transition hover:opacity-90"
           >
             Confirmar no WhatsApp
           </a>
@@ -160,30 +174,21 @@ export function BookingForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <label htmlFor="servico" className="text-sm font-medium text-brand-black">
+        <span id="servico-label" className={labelClass}>
           Serviço
-        </label>
-        <select
-          id="servico"
-          required
+        </span>
+        <ServiceSelect
+          services={services}
           value={serviceId}
-          onChange={(e) => handleServiceChange(e.target.value)}
-          className="rounded-lg border border-black/10 px-3 py-2 text-sm"
-        >
-          <option value="" disabled>
-            Selecione um serviço
-          </option>
-          {services.map((service) => (
-            <option key={service.id} value={service.id}>
-              {service.name} — {formatPrice(service.price)} (
-              {formatDuration(service.duration_minutes)})
-            </option>
-          ))}
-        </select>
+          onChange={handleServiceChange}
+          buttonId="servico"
+          labelId="servico-label"
+          listboxId="servico-listbox"
+        />
       </div>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="data" className="text-sm font-medium text-brand-black">
+        <label htmlFor="data" className={labelClass}>
           Data
         </label>
         <input
@@ -193,13 +198,13 @@ export function BookingForm({
           min={todayISO()}
           value={dateISO}
           onChange={(e) => handleDateChange(e.target.value)}
-          className="rounded-lg border border-black/10 px-3 py-2 text-sm"
+          className={fieldClass}
         />
       </div>
 
       {serviceId && dateISO && (
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-brand-black">Horário</span>
+          <span className={labelClass}>Horário</span>
           <SlotPicker
             key={`${serviceId}-${dateISO}`}
             serviceId={serviceId}
@@ -213,7 +218,7 @@ export function BookingForm({
       {time && (
         <>
           <div className="flex flex-col gap-2">
-            <label htmlFor="nome" className="text-sm font-medium text-brand-black">
+            <label htmlFor="nome" className={labelClass}>
               Seu nome
             </label>
             <input
@@ -222,15 +227,12 @@ export function BookingForm({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="rounded-lg border border-black/10 px-3 py-2 text-sm"
+              className={fieldClass}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="whatsapp"
-              className="text-sm font-medium text-brand-black"
-            >
+            <label htmlFor="whatsapp" className={labelClass}>
               WhatsApp (com DDD)
             </label>
             <input
@@ -240,15 +242,12 @@ export function BookingForm({
               placeholder="(44) 90000-0000"
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
-              className="rounded-lg border border-black/10 px-3 py-2 text-sm"
+              className={`${fieldClass} placeholder:text-brand-smoke/50`}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="observacao"
-              className="text-sm font-medium text-brand-black"
-            >
+            <label htmlFor="observacao" className={labelClass}>
               Observação (opcional)
             </label>
             <textarea
@@ -256,24 +255,24 @@ export function BookingForm({
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="rounded-lg border border-black/10 px-3 py-2 text-sm"
+              className={fieldClass}
             />
           </div>
 
           {selectedService && (
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-brand-smoke">
               Resumo: {selectedService.name} —{" "}
               {formatPrice(selectedService.price)} (
               {formatDuration(selectedService.duration_minutes)})
             </p>
           )}
 
-          {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+          {submitError && <p className="text-sm text-red-400">{submitError}</p>}
 
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-full bg-brand-red px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-full bg-brand-red px-6 py-4 text-sm font-bold tracking-widest text-white uppercase transition hover:opacity-90 disabled:opacity-50"
           >
             {submitting ? "Enviando..." : "Agendar"}
           </button>

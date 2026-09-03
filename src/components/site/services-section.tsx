@@ -69,7 +69,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                 <article
                   className={
                     isLead
-                      ? "relative flex min-h-[160px] flex-col justify-end gap-6 overflow-hidden rounded-[2rem] p-8 text-brand-cream sm:min-h-[190px] sm:rounded-[2.5rem] sm:p-10 lg:min-h-[220px] lg:flex-row lg:items-end lg:justify-between lg:gap-12 lg:rounded-[3rem] lg:p-12"
+                      ? "relative flex min-h-[160px] flex-col justify-end gap-6 overflow-hidden rounded-xl p-8 text-brand-cream sm:min-h-[190px] sm:rounded-2xl sm:p-10 lg:min-h-[220px] lg:flex-row lg:items-end lg:justify-between lg:gap-12 lg:rounded-3xl lg:p-12"
                       : "flex flex-col border-t border-brand-black/10 pt-6"
                   }
                 >

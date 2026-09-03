@@ -31,6 +31,8 @@
   --color-brand-paper: var(--color-brand-paper);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
+  --font-heading-soft: var(--font-heading-soft);
+  --font-nav: var(--font-nav);
   --font-label: var(--font-label);
 }
 
@@ -38,4 +40,17 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body), Arial, Helvetica, sans-serif;
+}
+
+/* Selo giratório da Hero (2026-09-03) — ver hero-seal.tsx. CSS puro
+   (`@keyframes` + `transform: rotate`), sem Framer Motion/GSAP: é um giro
+   ambiente contínuo, não ligado a scroll nem a interação. */
+@keyframes seal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.seal-spin {
+  animation: seal-spin 18s linear infinite;
 }

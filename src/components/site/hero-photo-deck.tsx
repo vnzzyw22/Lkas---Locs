@@ -131,7 +131,7 @@ export function HeroPhotoDeck({
   if (heroPhotos.length === 0) return null;
 
   return (
-    <div className="group relative hidden h-56 w-56 shrink-0 hover:z-30 active:z-30 sm:block lg:h-72 lg:w-72">
+    <div className="group relative hidden h-56 w-56 shrink-0 cursor-pointer hover:z-30 active:z-30 sm:block lg:h-72 lg:w-72">
       {/* alvo de hover/toque bem maior que a caixa visual das fotos — só
           um retângulo invisível (sem estilo, não intercepta nada visualmente)
           pra facilitar acertar o gesto. Estica bem pra baixo/esquerda (espaço
@@ -141,7 +141,7 @@ export function HeroPhotoDeck({
           o `group-hover`/`group-active` das fotos normalmente. */}
       <div
         aria-hidden="true"
-        className="absolute -top-2 -right-2 -bottom-16 -left-20 lg:-bottom-24 lg:-left-28"
+        className="absolute -top-4 -right-4 -bottom-28 -left-32 lg:-bottom-36 lg:-left-44"
       />
 
       {heroPhotos.map((photo, i) => {

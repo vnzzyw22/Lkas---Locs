@@ -1,4 +1,5 @@
 import { SettingsForm } from "@/components/admin/settings-form";
+import { pageSubtitleClass, pageTitleClass } from "@/components/admin/theme";
 import { getBusinessSettings } from "@/lib/supabase/queries";
 
 export default async function ConfiguracoesPage() {
@@ -7,8 +8,8 @@ export default async function ConfiguracoesPage() {
   if (!business) {
     return (
       <div>
-        <h1 className="text-xl font-bold text-brand-black">Configurações</h1>
-        <p className="mt-2 text-sm text-red-600">
+        <h1 className={pageTitleClass}>Configurações</h1>
+        <p className="mt-2 text-sm text-red-400">
           Não foi possível carregar as configurações do negócio.
         </p>
       </div>
@@ -17,8 +18,8 @@ export default async function ConfiguracoesPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-brand-black">Configurações</h1>
-      <p className="mt-2 text-sm text-neutral-500">
+      <h1 className={pageTitleClass}>Configurações</h1>
+      <p className={pageSubtitleClass}>
         Dados usados no site público e no fluxo de agendamento.
       </p>
       <SettingsForm business={business} />

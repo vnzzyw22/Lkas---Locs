@@ -69,7 +69,7 @@ export function Hero({ business, photos }: HeroProps) {
     <section
       id="topo"
       ref={sectionRef}
-      className="relative bg-brand-ink text-brand-cream"
+      className="relative bg-brand-ink pt-16 text-brand-cream"
     >
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div

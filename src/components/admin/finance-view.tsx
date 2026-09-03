@@ -6,6 +6,14 @@ import {
   createTransaction,
   deleteTransaction,
 } from "@/app/admin/(painel)/financeiro/actions";
+import {
+  buttonPrimaryClass,
+  cardClass,
+  fieldClass,
+  filterButtonClass,
+  labelClass,
+  linkDangerClass,
+} from "@/components/admin/theme";
 import { formatPrice } from "@/lib/format";
 import type { AdminTransaction, TransactionType } from "@/lib/supabase/types";
 
@@ -93,40 +101,42 @@ export function FinanceView({ monthISO, transactions }: FinanceViewProps) {
 
   return (
     <div className="mt-6 flex flex-col gap-6">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => goToMonth(shiftMonth(monthISO, -1))}
-          className="rounded-full border border-neutral-200 px-3 py-1.5 text-sm hover:bg-neutral-50"
+          className={filterButtonClass(false)}
         >
           ← Mês anterior
         </button>
-        <span className="font-medium text-brand-black">{monthISO}</span>
+        <span className="font-nav text-xs font-bold tracking-widest text-white uppercase">
+          {monthISO}
+        </span>
         <button
           type="button"
           onClick={() => goToMonth(shiftMonth(monthISO, 1))}
-          className="rounded-full border border-neutral-200 px-3 py-1.5 text-sm hover:bg-neutral-50"
+          className={filterButtonClass(false)}
         >
           Próximo mês →
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-xl border border-neutral-200 p-4">
-          <p className="text-xs text-neutral-500">Entradas</p>
-          <p className="text-lg font-bold text-green-700">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className={cardClass}>
+          <p className="text-xs text-white/50">Entradas</p>
+          <p className="mt-1 text-lg font-bold text-green-400">
             {formatPrice(income)}
           </p>
         </div>
-        <div className="rounded-xl border border-neutral-200 p-4">
-          <p className="text-xs text-neutral-500">Saídas</p>
-          <p className="text-lg font-bold text-red-600">
+        <div className={cardClass}>
+          <p className="text-xs text-white/50">Saídas</p>
+          <p className="mt-1 text-lg font-bold text-red-400">
             {formatPrice(expense)}
           </p>
         </div>
-        <div className="rounded-xl border border-neutral-200 p-4">
-          <p className="text-xs text-neutral-500">Saldo</p>
-          <p className="text-lg font-bold text-brand-black">
+        <div className={cardClass}>
+          <p className="text-xs text-white/50">Saldo</p>
+          <p className="mt-1 text-lg font-bold text-white">
             {formatPrice(income - expense)}
           </p>
         </div>
@@ -134,129 +144,103 @@ export function FinanceView({ monthISO, transactions }: FinanceViewProps) {
 
       <form
         onSubmit={handleSubmit}
-        className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 p-4"
+        className={`flex flex-wrap items-end gap-3 ${cardClass}`}
       >
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-neutral-600">Tipo</label>
+        <div className="flex flex-col gap-1.5">
+          <label className={labelClass}>Tipo</label>
           <select
             value={type}
             onChange={(e) => setType(e.target.value as TransactionType)}
-            className="rounded-lg border border-neutral-200 px-2 py-1 text-sm"
+            className={fieldClass}
           >
             <option value="income">Entrada</option>
             <option value="expense">Saída</option>
           </select>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-neutral-600">Data</label>
+        <div className="flex flex-col gap-1.5">
+          <label className={labelClass}>Data</label>
           <input
             type="date"
             value={occurredAt}
             onChange={(e) => setOccurredAt(e.target.value)}
-            className="rounded-lg border border-neutral-200 px-2 py-1 text-sm"
+            className={fieldClass}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-neutral-600">
-            Valor (R$)
-          </label>
+        <div className="flex flex-col gap-1.5">
+          <label className={labelClass}>Valor (R$)</label>
           <input
             type="text"
             inputMode="decimal"
             required
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-28 rounded-lg border border-neutral-200 px-2 py-1 text-sm"
+            className={`w-28 ${fieldClass}`}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-neutral-600">
-            Categoria
-          </label>
+        <div className="flex flex-col gap-1.5">
+          <label className={labelClass}>Categoria</label>
           <input
             type="text"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="rounded-lg border border-neutral-200 px-2 py-1 text-sm"
+            className={fieldClass}
           />
         </div>
 
-        <div className="flex flex-1 min-w-40 flex-col gap-1">
-          <label className="text-xs font-medium text-neutral-600">
-            Descrição
-          </label>
+        <div className="flex min-w-40 flex-1 flex-col gap-1.5">
+          <label className={labelClass}>Descrição</label>
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="rounded-lg border border-neutral-200 px-2 py-1 text-sm"
+            className={fieldClass}
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-full bg-brand-red px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting} className={buttonPrimaryClass}>
           {submitting ? "Salvando..." : "Lançar"}
         </button>
 
-        {error && <p className="w-full text-sm text-red-600">{error}</p>}
+        {error && <p className="w-full text-sm text-red-400">{error}</p>}
       </form>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-max text-left text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200 text-neutral-500">
-              <th className="py-2 pr-4">Data</th>
-              <th className="py-2 pr-4">Tipo</th>
-              <th className="py-2 pr-4">Categoria</th>
-              <th className="py-2 pr-4">Descrição</th>
-              <th className="py-2 pr-4">Valor</th>
-              <th className="py-2 pr-4">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((t) => (
-              <tr key={t.id} className="border-b border-neutral-100">
-                <td className="py-2 pr-4">{formatDate(t.occurred_at)}</td>
-                <td className="py-2 pr-4">
-                  <span
-                    className={
-                      t.type === "income"
-                        ? "rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700"
-                        : "rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700"
-                    }
-                  >
-                    {TYPE_LABEL[t.type]}
-                  </span>
-                </td>
-                <td className="py-2 pr-4">{t.category ?? "—"}</td>
-                <td className="py-2 pr-4 text-neutral-500">
-                  {t.description ?? "—"}
-                </td>
-                <td className="py-2 pr-4 font-medium">
-                  {formatPrice(t.amount)}
-                </td>
-                <td className="py-2 pr-4">
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(t.id)}
-                    className="text-neutral-500 hover:underline"
-                  >
-                    Excluir
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="flex flex-col gap-2">
+        {transactions.map((t) => (
+          <div
+            key={t.id}
+            className={`flex flex-wrap items-center gap-x-6 gap-y-2 text-sm ${cardClass}`}
+          >
+            <span className="text-white/40">{formatDate(t.occurred_at)}</span>
+            <span
+              className={
+                t.type === "income"
+                  ? "rounded-full bg-green-500/15 px-2 py-0.5 text-xs text-green-400"
+                  : "rounded-full bg-red-500/15 px-2 py-0.5 text-xs text-red-400"
+              }
+            >
+              {TYPE_LABEL[t.type]}
+            </span>
+            <span className="text-white/60">{t.category ?? "—"}</span>
+            <span className="text-white/40">{t.description ?? "—"}</span>
+            <span className="font-medium text-white">
+              {formatPrice(t.amount)}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => handleDelete(t.id)}
+              className={`ml-auto ${linkDangerClass}`}
+            >
+              Excluir
+            </button>
+          </div>
+        ))}
 
         {transactions.length === 0 && (
-          <p className="py-4 text-sm text-neutral-500">
+          <p className="py-4 text-sm text-white/40">
             Nenhum lançamento nesse mês.
           </p>
         )}

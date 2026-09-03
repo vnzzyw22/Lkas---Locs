@@ -1,11 +1,31 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Manrope, Unbounded } from "next/font/google";
+import { JetBrains_Mono, Manrope, Montserrat, Sora, Unbounded } from "next/font/google";
 import "./globals.css";
 
 const unbounded = Unbounded({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["500", "700", "900"],
+});
+
+// Segunda fonte de destaque (2026-09-03), a pedido do cliente — mesmo
+// gênero geométrico/bold do Unbounded, mas com traço mais suave (curvas
+// arredondadas em vez de cortes angulares). Uso pontual: só o título do FAQ
+// por enquanto, pra diferenciar essa seção do tratamento "poster" de
+// Serviços/Galeria sem sair da família editorial do site.
+const sora = Sora({
+  variable: "--font-heading-soft",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+});
+
+// Fonte só da Navbar (2026-09-03), a pedido do cliente — "muito mais
+// profissional e moderno" pros links do menu, em vez do mono
+// (`font-label`) usado no resto do site pra legendas/dados factuais.
+const montserrat = Montserrat({
+  variable: "--font-nav",
+  subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
 const manrope = Manrope({
@@ -28,7 +48,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${unbounded.variable} ${manrope.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${unbounded.variable} ${sora.variable} ${montserrat.variable} ${manrope.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <a
