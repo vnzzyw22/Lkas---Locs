@@ -7,6 +7,16 @@ const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
   : undefined;
 
 const nextConfig: NextConfig = {
+  // Server Actions (usado no upload de foto da Galeria) limitam o corpo da
+  // requisição a 1MB por padrão — menor que o limite de 5MB que o próprio
+  // formulário anuncia (src/app/admin/(painel)/galeria/actions.ts). Sem
+  // isso, uma foto "normal" de celular (facilmente >1MB) é rejeitada pelo
+  // Next.js antes do nosso código rodar, e o botão trava em "Enviando...".
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "5mb",
+    },
+  },
   images: {
     remotePatterns: supabaseHostname
       ? [

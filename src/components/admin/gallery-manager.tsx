@@ -128,15 +128,23 @@ export function GalleryManager({ photos }: GalleryManagerProps) {
     setUploading(true);
     setUploadError(null);
 
-    const result = await uploadGalleryPhoto(new FormData(e.currentTarget));
+    try {
+      const result = await uploadGalleryPhoto(new FormData(e.currentTarget));
 
-    setUploading(false);
-
-    if (result.ok) {
-      formRef.current?.reset();
-      router.refresh();
-    } else {
-      setUploadError(result.error);
+      if (result.ok) {
+        formRef.current?.reset();
+        router.refresh();
+      } else {
+        setUploadError(result.error);
+      }
+    } catch {
+      // Falha antes de chegar na Server Action (ex.: corpo da requisição
+      // maior que o limite configurado, queda de rede) não retorna
+      // ActionResult — sem isso o botão ficava travado em "Enviando..."
+      // pra sempre.
+      setUploadError("Não foi possível enviar a imagem. Tente novamente.");
+    } finally {
+      setUploading(false);
     }
   }
 
