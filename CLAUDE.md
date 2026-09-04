@@ -544,6 +544,47 @@ antes de mexer nisso de novo.
     `/agendar` e guarda de rota do `/admin`; sem scroll horizontal; fotos
     Hero/Galeria sem duplicar; WhatsApp/Instagram corretos — os fixes desta
     sessão se confirmaram também em produção, não só local.
+  - ✅ **Favicon + bug real de upload travado (2026-09-04, sessão seguinte
+    ao deploy):**
+    - Favicon trocado pelo logo real: `src/app/icon.jpg` (convenção do App
+      Router, aceita `.jpg` direto — Next.js gera a tag `<link rel="icon">`
+      sozinho) substitui o `src/app/favicon.ico` genérico do
+      `create-next-app`. Confirmado em produção via `getComputedStyle`/
+      `document.querySelectorAll('link[rel~="icon"]')`.
+    - ⚠️ **Bug real corrigido — upload de foto travava em "Enviando...":**
+      cliente reportou não conseguir adicionar fotos pelo painel em
+      produção. Causa raiz: Server Actions do Next.js limitam o corpo da
+      requisição a **1MB por padrão** — menor que o limite de 5MB que o
+      próprio formulário anunciava. Uma foto "normal" de celular passa de
+      1MB fácil, então o Next.js rejeitava o envio antes do nosso código
+      rodar; como `handleUpload` (`gallery-manager.tsx`) não tinha
+      try/catch em volta do `await` da Server Action, a exceção pulava o
+      `setUploading(false)`, deixando o botão travado pra sempre — sem
+      nenhuma mensagem de erro visível, parecia que "não fazia nada".
+      Corrigido: `next.config.ts` ganhou
+      `experimental.serverActions.bodySizeLimit = "5mb"` (bate com o
+      limite já anunciado); `handleUpload` ganhou try/catch/finally.
+      Testado em produção com foto de 1.38MB (`foto-tranças-3.jpg`,
+      antes ficaria travada) — subiu com sucesso, sem erro de console.
+    - Nota de ambiente: o servidor de dev local (porta 3005, notebook do
+      cliente) travou repetidamente nesta sessão com `memory allocation
+      ... failed` (painic do Rust/Turbopack, não bug de código) — sinal de
+      pouca RAM livre no momento (outro projeto do cliente, `gold-naipe`,
+      também costuma estar rodando). Testes desta sessão feitos direto em
+      produção via Playwright em vez de insistir no dev server local.
+    - ⚠️ **Achado à parte, não commitado:** durante a sessão, vários
+      arquivos em `public/imagens` sumiram da árvore de trabalho local
+      (incluindo as 3 fotos `SaveClip.App_*.jpg` que hoje sustentam as 3
+      fotos "hero" em produção) e 4 novos apareceram sem estar rastreados
+      (`img-hero.jpg`/`02`/`03`, `foto-tranças-3.jpg`) — não fui eu quem
+      mexeu nisso. **Não commitei essas deleções** (quebraria as fotos da
+      Hero em produção no próximo deploy). Duas dessas fotos novas
+      (`img-hero.jpg`, `foto-tranças-3.jpg`) já foram enviadas pro Storage
+      via upload real pelo painel (viram registros novos em
+      `gallery_photos`, não dependem do arquivo local) — mas os arquivos
+      físicos ainda deletados/novos em `public/imagens` continuam
+      pendentes de decisão do cliente antes de qualquer commit que toque
+      nessa pasta.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
