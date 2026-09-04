@@ -9,14 +9,16 @@ import { ServicesSection } from "@/components/site/services-section";
 import {
   getActiveServices,
   getBusinessSettings,
-  getPublishedGalleryPhotos,
+  getHeroGalleryPhotos,
+  getPublicGalleryPhotos,
 } from "@/lib/supabase/queries";
 
 export default async function Home() {
-  const [business, services, photos] = await Promise.all([
+  const [business, services, heroPhotos, galleryPhotos] = await Promise.all([
     getBusinessSettings(),
     getActiveServices(),
-    getPublishedGalleryPhotos(),
+    getHeroGalleryPhotos(),
+    getPublicGalleryPhotos(),
   ]);
 
   return (
@@ -30,9 +32,9 @@ export default async function Home() {
           landmark "contentinfo" (perde esse papel se aninhado dentro de
           main). */}
       <main id="conteudo" className="flex flex-1 flex-col">
-        <Hero business={business} photos={photos} />
+        <Hero business={business} photos={heroPhotos} />
         <ServicesSection services={services} />
-        <GallerySection photos={photos} />
+        <GallerySection photos={galleryPhotos} />
         <AboutSection />
         <FaqSection />
         <ContactSection business={business} />

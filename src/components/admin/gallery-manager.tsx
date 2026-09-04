@@ -71,6 +71,10 @@ function PhotoCard({ photo }: { photo: AdminGalleryPhoto }) {
         onChange={(e) => setCategory(e.target.value)}
         className={fieldClass}
       />
+      <p className="text-[11px] leading-snug text-white/40">
+        Digite &quot;hero&quot; para exibir no topo do site, ou o nome do
+        serviço para exibir na galeria principal
+      </p>
 
       <div className="flex items-center gap-2">
         <label className="flex items-center gap-1.5 text-xs text-white/70">
@@ -156,6 +160,10 @@ export function GalleryManager({ photos }: GalleryManagerProps) {
         <div className="flex flex-col gap-1.5">
           <label className={labelClass}>Categoria (opcional)</label>
           <input type="text" name="category" className={fieldClass} />
+          <p className="max-w-56 text-[11px] leading-snug text-white/40">
+            Digite &quot;hero&quot; para exibir no topo do site, ou o nome do
+            serviço para exibir na galeria principal
+          </p>
         </div>
         <button type="submit" disabled={uploading} className={buttonPrimaryClass}>
           {uploading ? "Enviando..." : "Enviar foto"}

@@ -1,3 +1,4 @@
+import { HERO_GALLERY_CATEGORIES } from "@/lib/gallery-categories";
 import type { BusyRange } from "@/lib/scheduling";
 import { createClient } from "./server";
 import type { BusinessSettings, GalleryPhoto, Service } from "./types";
@@ -76,16 +77,39 @@ export async function getBusySlots(
   return data.map((row) => ({ startsAt: row.starts_at, endsAt: row.ends_at }));
 }
 
-export async function getPublishedGalleryPhotos(): Promise<GalleryPhoto[]> {
+// Fotos com categoria "hero"/"topo" — só o leque/fileira da Hero.
+export async function getHeroGalleryPhotos(): Promise<GalleryPhoto[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("gallery_photos")
     .select("id, url, category")
     .eq("published", true)
+    .in("category", HERO_GALLERY_CATEGORIES)
     .order("display_order", { ascending: true });
 
   if (error) {
-    console.error("Erro ao buscar gallery_photos:", error.message);
+    console.error("Erro ao buscar gallery_photos (hero):", error.message);
+    return [];
+  }
+
+  return data;
+}
+
+// Todas as fotos publicadas, exceto as marcadas pra Hero (categoria
+// null/"locs"/"tranças"/etc. — qualquer coisa que não seja "hero"/"topo").
+export async function getPublicGalleryPhotos(): Promise<GalleryPhoto[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("gallery_photos")
+    .select("id, url, category")
+    .eq("published", true)
+    .or(
+      `category.is.null,category.not.in.(${HERO_GALLERY_CATEGORIES.join(",")})`,
+    )
+    .order("display_order", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao buscar gallery_photos (galeria):", error.message);
     return [];
   }
 

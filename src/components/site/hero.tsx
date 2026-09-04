@@ -69,7 +69,7 @@ export function Hero({ business, photos }: HeroProps) {
     <section
       id="topo"
       ref={sectionRef}
-      className="relative bg-brand-ink pt-16 text-brand-cream"
+      className="relative overflow-x-hidden bg-brand-ink pt-16 text-brand-cream"
     >
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div
@@ -99,7 +99,7 @@ export function Hero({ business, photos }: HeroProps) {
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-20 mx-auto flex min-h-[74svh] max-w-[1500px] flex-col px-6 pt-10 pb-10 sm:min-h-[78svh] sm:px-10 sm:pt-12 lg:px-16"
+        className="relative z-20 mx-auto flex min-h-[74svh] max-w-[1500px] flex-col px-6 pt-10 pb-14 sm:min-h-[78svh] sm:px-10 sm:pt-12 lg:px-16"
       >
         <div className="relative">
           <motion.p
@@ -177,7 +177,7 @@ export function Hero({ business, photos }: HeroProps) {
             </span>
             <Link
               href="/agendar"
-              className="group inline-flex w-fit items-center gap-3 rounded-full bg-brand-cream px-7 py-3.5 font-label text-xs font-medium tracking-widest text-brand-ink uppercase transition hover:bg-brand-red hover:text-brand-cream"
+              className="group inline-flex w-fit items-center gap-3 rounded-full border-2 border-brand-red bg-transparent px-7 py-3.5 font-label text-xs font-medium tracking-widest text-white uppercase transition-all duration-300 ease-in-out hover:bg-brand-red hover:text-white"
             >
               Agendar horário
               <span className="transition-transform group-hover:translate-x-1">

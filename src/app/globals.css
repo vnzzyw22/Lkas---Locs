@@ -42,6 +42,18 @@ body {
   font-family: var(--font-body), Arial, Helvetica, sans-serif;
 }
 
+/* Trava de segurança contra scroll horizontal (2026-09-04) — a causa raiz
+   real (decal-locs-01.png vazando ~18px além da viewport em telas de
+   ~1366px, ver hero.tsx) já foi corrigida na origem; isto aqui é só rede
+   de proteção pra qualquer vazamento lateral futuro não travar a página
+   inteira. box-sizing: border-box já vem do preflight do Tailwind
+   (@import "tailwindcss" acima) — não precisa repetir aqui. */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 /* Selo giratório da Hero (2026-09-03) — ver hero-seal.tsx. CSS puro
    (`@keyframes` + `transform: rotate`), sem Framer Motion/GSAP: é um giro
    ambiente contínuo, não ligado a scroll nem a interação. */

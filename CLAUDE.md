@@ -13,8 +13,8 @@ pensada para reuso futuro com outros profissionais.
   na aplicação, sem `business_id` nas tabelas. Dados da marca (Lkas Locs) ficam
   isolados na tabela `business_settings`, nunca hardcoded no frontend.
 - **Gerenciador de pacotes:** npm.
-- **Git:** repositório local apenas por enquanto. Remoto no GitHub fica para quando
-  formos conectar o deploy na Vercel.
+- **Git:** remoto no GitHub criado (`vnzzyw22/Lkas---Locs`). Deploy na Vercel
+  a partir dele — ver Fase 6 pra status atual.
 - **Stack:** Next.js (App Router, TypeScript) + Tailwind CSS v4 + Supabase
   (Postgres/Auth/Storage) + Vercel. Painel administrativo com shadcn/ui. Animações:
   Framer Motion (entradas/transições) + GSAP/ScrollTrigger (parallax da Hero).
@@ -435,6 +435,102 @@ antes de mexer nisso de novo.
       e confirmar se a tela preta de `Print-do-meu-celular.jpg` ainda
       acontece ou já foi resolvida pela remoção do vídeo de fundo (ver
       Fase 6 > Brand Outro).
+  - ✅ **Redesign Sobre/FAQ/Navbar/Agendar/Admin** (commit `8113a6b`,
+    2026-09-03): endereçou várias das pendências acima — Navbar
+    simplificada, Agendar reestilizado (dropdown de serviço 100%
+    customizado), Admin reestilizado por completo (tokens em
+    `components/admin/theme.ts`, Agenda virou grade semanal), Rodapé
+    com colunas, FAQ nova (accordion), Sobre com medalhão giratório.
+    Não tinha sido verificado visualmente ainda (Playwright não
+    conectou naquela sessão) — verificado na sessão seguinte, ver linha
+    abaixo.
+  - ✅ **Verificação visual/funcional do redesign** (2026-09-04): MCP do
+    Playwright continuou sem conectar, mas `npx playwright` funciona
+    normalmente neste ambiente (Chromium já estava em cache local de
+    uma instalação anterior) — usar esse caminho (driver Playwright
+    avulso via `npm install playwright` numa pasta fora do projeto,
+    não o MCP) em vez de assumir que "Playwright indisponível" bloqueia
+    testes. **Ao escrever screenshot paths dentro de heredocs
+    `node -e`/`cat <<'EOF'`, usar `path.join`/barras `/` em vez de
+    `\\` literal** — barras invertidas dentro de string JS levada por
+    heredoc do Bash tool corrompem o path (cada `\X` não reconhecido
+    como escape vira só `X`, apagando a barra).
+    - Navegado site público completo (desktop+mobile), `/agendar`
+      (fluxo até confirmação), guarda de rota do admin, login e as 6
+      seções autenticadas do painel — zero erros de console/página em
+      toda a navegação.
+    - FAQ, dropdown de serviço, agenda semanal (clique abre detalhe,
+      cancelar funciona), exclusão de cliente com agendamento (bloqueada
+      com mensagem amigável, não o erro bruto 23503) — tudo confirmado
+      funcionando.
+    - ⚠️ **Achado crítico (dado, não código):** `business_settings.whatsapp`
+      e `.instagram` estão **vazios** no banco real. Consequência: a seção
+      Contato do site não mostra nenhum link de WhatsApp, e pior — a tela
+      final do agendamento (`/agendar`) diz "confirme o pedido pelo
+      WhatsApp" mas não exibe **nenhum** botão/link pra isso, quebrando o
+      fluxo de conversão principal do site. Corrigir preenchendo o campo
+      Whatsapp (e Instagram) em **Configurações** no painel admin — não é
+      bug de código, o componente já está condicionado corretamente à
+      existência do dado.
+    - Achados menores de dados (não código, avaliar com o cliente):
+      serviço "Loctian" tem descrição de teste esquecida ("Teste,
+      testável para ver se funciona'"); Galeria tem 5 fotos enviadas mas
+      só 3 marcadas "Publicada" (as 2 com marca d'água "trancas" ficam
+      ocultas — confirmar se é intencional); tabela `clients` acumulou
+      registros de teste (`vini`, `teste 02`, `Teste 01`) de sessões
+      anteriores, bons candidatos a limpeza antes do lançamento.
+    - Criei e depois **cancelei** pelo painel um agendamento de teste
+      ponta a ponta (05/09 10:30, "Teste QA Playwright") pra validar o
+      fluxo — fica como "Cancelado" no histórico (não pode ser excluído
+      pela UI por causa da FK com `clients`, comportamento correto);
+      remover de vez exigiria acesso direto ao Supabase, não fiz isso.
+  - ✅ **Dados críticos preenchidos + correções de bug (2026-09-04, sessão
+    seguinte à verificação acima):**
+    - `business_settings.whatsapp`/`.instagram` preenchidos em Configurações
+      (`5544991062404`/`@lkaslocs`) — resolve o achado crítico registrado
+      acima; confirmado por Playwright que o link de WhatsApp aparece em
+      Contato e a mensagem pré-preenchida está correta.
+    - Botões "Agendar" (navbar) e "Agendar horário →" (Hero) reestilizados
+      a pedido do cliente: navbar virou `rounded-md`/fundo sólido/texto
+      branco/hover `brightness`; Hero virou contorno vermelho transparente
+      que inverte pra preenchido no hover. Só classes Tailwind, nenhuma
+      lógica de clique/rota tocada.
+    - ✅ **Bug real corrigido — fotos duplicadas Hero/Galeria:**
+      `getPublishedGalleryPhotos()` buscava um único array e passava pro
+      `<Hero>` e pro `<GallerySection>` sem filtro nenhum — qualquer foto
+      publicada aparecia nos dois lugares. Corrigido: `src/lib/
+      gallery-categories.ts` (novo) define categorias reservadas `"hero"`/
+      `"topo"`; `queries.ts` virou duas funções (`getHeroGalleryPhotos` via
+      `.in("category", [...])`, `getPublicGalleryPhotos` via `.or("category
+      .is.null,category.not.in.(...)")` — cuidado com semântica de NULL do
+      PostgREST, testado). Legenda cinza adicionada em `/admin/galeria`
+      explicando a convenção pro cliente. **Efeito colateral esperado:**
+      nenhuma foto tinha categoria "hero" ainda, então o leque da Hero
+      ficou vazio até o cliente marcar fotos — ele mesmo já marcou 3 fotos
+      como "hero" pelo painel durante a sessão (confirmado no log do
+      servidor).
+    - ✅ **Bug real corrigido — scroll horizontal na Hero:** diagnóstico do
+      cliente apontava o botão "Agendar horário" (achava que estava
+      vazando por estar perto da borda inferior — mas proximidade vertical
+      não causa scroll horizontal). Causa raiz real, achada medindo
+      `getBoundingClientRect` de todos os elementos: `decal-locs-01.png`
+      (acento ao lado de "LOCS") ultrapassava a borda direita da viewport
+      em ~18px especificamente perto de 1366px de largura (notebook
+      comum). Corrigido com `overflow-x-hidden` na `<section>` da Hero
+      (não afeta o leque de fotos no hover, que se espalha pra dentro da
+      página) + `pb-10`→`pb-14` no bloco de CTA/Explorar (respiro extra da
+      borda, pedido do cliente — os dois já ficam alinhados automaticamente
+      por dividirem a mesma linha flex `items-end`). Trava de segurança
+      `overflow-x: hidden` também adicionada em `html, body` no
+      `globals.css` como rede de proteção. Verificado sem scroll horizontal
+      em 375px/1366px/1920px de largura.
+    - Servidor de dev rodado na porta 3005 (3000/3001 já ocupadas por outro
+      projeto do cliente, `gold-naipe`) — atenção a isso em sessões
+      futuras neste mesmo notebook.
+    - Pendências de dado ainda abertas (ver lista completa acima): descrição
+      de teste no serviço "Loctian"; registros de teste em `clients`/
+      `appointments` (incluindo um novo criado nesta sessão, "Teste 04/09");
+      logo ainda placeholder.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
