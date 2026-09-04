@@ -13,8 +13,8 @@ pensada para reuso futuro com outros profissionais.
   na aplicação, sem `business_id` nas tabelas. Dados da marca (Lkas Locs) ficam
   isolados na tabela `business_settings`, nunca hardcoded no frontend.
 - **Gerenciador de pacotes:** npm.
-- **Git:** remoto no GitHub criado (`vnzzyw22/Lkas---Locs`). Deploy na Vercel
-  a partir dele — ver Fase 6 pra status atual.
+- **Git:** remoto no GitHub criado (`vnzzyw22/Lkas---Locs`). Deploy em produção
+  na Vercel a partir dele: https://lkaslocs.vercel.app (ver Fase 6).
 - **Stack:** Next.js (App Router, TypeScript) + Tailwind CSS v4 + Supabase
   (Postgres/Auth/Storage) + Vercel. Painel administrativo com shadcn/ui. Animações:
   Framer Motion (entradas/transições) + GSAP/ScrollTrigger (parallax da Hero).
@@ -531,6 +531,19 @@ antes de mexer nisso de novo.
       de teste no serviço "Loctian"; registros de teste em `clients`/
       `appointments` (incluindo um novo criado nesta sessão, "Teste 04/09");
       logo ainda placeholder.
+  - ✅ **Deploy em produção (2026-09-04):** GitHub (`vnzzyw22/Lkas---Locs`)
+    conectado à Vercel pelo painel (import de repo, sem CLI — login da
+    Vercel exige OAuth interativo no navegador, fora do alcance do agente
+    numa sessão não-interativa). Variáveis de ambiente configuradas na
+    Vercel: `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY`
+    (únicas necessárias — nada no código usa `SUPABASE_SERVICE_ROLE_KEY`).
+    ⚠️ Cliente digitou `.supabase.com` em vez de `.supabase.co` ao colar a
+    URL — mesmo typo já documentado na Fase 1, corrigido antes do deploy.
+    Site em produção: **https://lkaslocs.vercel.app**. Verificado por
+    Playwright direto na URL de produção: zero erros de console em `/`,
+    `/agendar` e guarda de rota do `/admin`; sem scroll horizontal; fotos
+    Hero/Galeria sem duplicar; WhatsApp/Instagram corretos — os fixes desta
+    sessão se confirmaram também em produção, não só local.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
