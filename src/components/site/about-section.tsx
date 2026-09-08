@@ -35,14 +35,14 @@ export function AboutSection() {
             <h2 className="font-display text-4xl leading-[0.92] font-black uppercase sm:text-5xl lg:text-6xl">
               <span
                 className="block text-transparent"
-                style={{ WebkitTextStroke: "1.5px var(--color-brand-cream)" }}
+                style={{ WebkitTextStroke: "1px var(--color-brand-cream)" }}
               >
                 Sobre o
               </span>
               <span className="block text-brand-red">Lkas</span>
               <span
                 className="block text-transparent"
-                style={{ WebkitTextStroke: "1.5px var(--color-brand-cream)" }}
+                style={{ WebkitTextStroke: "1px var(--color-brand-cream)" }}
               >
                 Locs
               </span>

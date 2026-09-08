@@ -143,7 +143,7 @@ export function Hero({ business, photos }: HeroProps) {
         <div className="relative mt-4 mb-6 lg:mt-6 lg:mb-8">
           <motion.h1
             variants={fadeUp}
-            className="font-display leading-[0.82] font-black tracking-tight"
+            className="pointer-events-none font-display leading-[0.82] font-black tracking-tight"
             style={{ fontSize: "clamp(3.25rem, 12vw, 9.5rem)" }}
           >
             <span className="block text-brand-red">LKAS</span>
