@@ -45,6 +45,46 @@ function formatDate(isoDate: string) {
   );
 }
 
+// Medidor de fluxo entradas/saídas (2026-09-08) — troca a barra genérica
+// verde/vermelho anterior por algo com cara de painel técnico usando a
+// própria identidade da marca: segmentos tipo equalizador acesos em
+// brand-red com leve brilho (echo do glow oxblood já usado na Hero
+// pública, ver hero.tsx), tipografia mono (font-label) pros números.
+const METER_SEGMENTS = 40;
+
+function FlowMeter({ income, expense }: { income: number; expense: number }) {
+  const total = income + expense;
+  const incomePct = total > 0 ? (income / total) * 100 : 0;
+  const expensePct = 100 - incomePct;
+  const filledSegments = Math.round((incomePct / 100) * METER_SEGMENTS);
+
+  return (
+    <div className="rounded-lg border border-white/10 bg-[#1a1a1a] p-5">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 font-label text-xs tracking-widest uppercase">
+        <span className="text-white/40">Fluxo do mês</span>
+        <span className="tabular-nums text-white/60">
+          <span className="text-brand-red">{Math.round(incomePct)}%</span>{" "}
+          entradas
+          <span className="mx-2 text-white/20">/</span>
+          {Math.round(expensePct)}% saídas
+        </span>
+      </div>
+      <div className="flex h-2 gap-[3px]">
+        {Array.from({ length: METER_SEGMENTS }).map((_, i) => (
+          <div
+            key={i}
+            className={
+              i < filledSegments
+                ? "h-full flex-1 rounded-[1px] bg-brand-red shadow-[0_0_6px_var(--color-brand-red)]"
+                : "h-full flex-1 rounded-[1px] bg-white/10"
+            }
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function FinanceView({ monthISO, transactions }: FinanceViewProps) {
   const router = useRouter();
 
@@ -149,22 +189,7 @@ export function FinanceView({ monthISO, transactions }: FinanceViewProps) {
       </div>
 
       {income + expense > 0 && (
-        <div className={cardClass}>
-          <div className="mb-2 flex justify-between font-label text-xs tabular-nums text-white/40">
-            <span>{Math.round((income / (income + expense)) * 100)}% entradas</span>
-            <span>{Math.round((expense / (income + expense)) * 100)}% saídas</span>
-          </div>
-          <div className="flex h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="bg-green-500/80"
-              style={{ width: `${(income / (income + expense)) * 100}%` }}
-            />
-            <div
-              className="bg-red-500/80"
-              style={{ width: `${(expense / (income + expense)) * 100}%` }}
-            />
-          </div>
-        </div>
+        <FlowMeter income={income} expense={expense} />
       )}
 
       <form

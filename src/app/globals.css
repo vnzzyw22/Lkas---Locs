@@ -66,3 +66,15 @@ body {
 .seal-spin {
   animation: seal-spin 18s linear infinite;
 }
+
+/* Corrige o popup nativo de <select> no admin (2026-09-08): o
+   `[color-scheme:dark]` do fieldClass (theme.ts) nem sempre é respeitado
+   pelo navegador na lista de opções (só no campo fechado) -- resultado é
+   texto branco (herdado do fieldClass) sobre fundo branco padrão do SO
+   nas opções abertas. Só o admin usa <select> nativo (o site público usa
+   dropdown custom em booking-form.tsx), então é seguro estilizar
+   globalmente. Cor de fundo igual ao cardClass (#1a1a1a). */
+select option {
+  background-color: #1a1a1a;
+  color: #fff;
+}
