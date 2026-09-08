@@ -585,6 +585,37 @@ antes de mexer nisso de novo.
       físicos ainda deletados/novos em `public/imagens` continuam
       pendentes de decisão do cliente antes de qualquer commit que toque
       nessa pasta.
+  - ✅ **Polimento do Admin, lista do cliente feita em 2026-09-08**
+    (começando "de trás pra frente" — Admin antes do Geral/mobile, a
+    pedido do cliente): 4 itens, cada um verificado em produção antes de
+    avançar pro próximo:
+    - **Clientes:** lista solta (`flex-wrap`) virou tabela de verdade
+      (Nome/WhatsApp/Observações/Desde/Ações) — mesmo padrão de tabela
+      reutilizado depois em Financeiro.
+    - **Serviços:** avisa (inline, ao digitar, e de novo ao tentar salvar)
+      quando o número de "Ordem de exibição" já está em uso por outro
+      serviço — antes permitia duplicata silenciosa. **Achado real ao
+      testar:** já existia uma duplicata de verdade no banco (Barbeiro e
+      Terapeuta Capilar, ambos Ordem 3) — corrigida na hora (Barbeiro →
+      Ordem 2). Validação é só client-side (compara contra a lista de
+      `services` já carregada) — suficiente porque só há 1 admin
+      concorrente possível neste projeto; não precisou de constraint no
+      banco.
+    - **Galeria:** campo de categoria em texto livre (`"hero"` etc.)
+      virou botão de 2 opções — "Principal"/"Galeria" (reaproveita
+      `filterButtonClass` do tema do admin) — cliente não digita mais
+      nada. Por baixo continua gravando `"hero"` ou `null` em
+      `gallery_photos.category`, mesmo mecanismo de
+      `getHeroGalleryPhotos`/`getPublicGalleryPhotos` de antes, sem
+      mudança de schema.
+    - **Financeiro:** cards de resumo ganharam borda de destaque colorida
+      (verde/vermelho/vermelho-da-marca) + números em `font-label` (mono)
+      com `tabular-nums`; barra de proporção entradas×saídas nova; lista
+      de lançamentos virou tabela (mesmo padrão de Clientes), valor com
+      sinal (`+`/`−`) colorido e alinhado à direita — pedido do cliente
+      era "cara de algo tecnológico e premium".
+    - Todos os 4 testados em produção via Playwright (não local — servidor
+      de dev local seguiu instável por falta de RAM nesta sessão também).
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
