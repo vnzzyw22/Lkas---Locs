@@ -616,6 +616,21 @@ antes de mexer nisso de novo.
       era "cara de algo tecnológico e premium".
     - Todos os 4 testados em produção via Playwright (não local — servidor
       de dev local seguiu instável por falta de RAM nesta sessão também).
+    - ⚠️ **Feedback do cliente logo em seguida, 2 correções:**
+      - **Bug real:** dropdown nativo "Tipo" (Entrada/Saída) do formulário
+        do Financeiro ficava com texto branco sobre fundo branco ao abrir
+        as opções — `[color-scheme:dark]` do `fieldClass` (theme.ts) só
+        pega o campo fechado, não o popup nativo de `<select>` em todos os
+        navegadores. Corrigido com `select option { background-color:
+        #1a1a1a; color: #fff }` global em `globals.css` — seguro global
+        porque só o admin usa `<select>` nativo (site público usa dropdown
+        custom em `booking-form.tsx`).
+      - Barra de proporção verde/vermelho (recém-criada) achada "genérica
+        demais" — trocada por `FlowMeter` (`finance-view.tsx`): medidor
+        segmentado estilo equalizador, aceso em `brand-red` com brilho
+        (`shadow` usando `var(--color-brand-red)`, eco do glow oxblood já
+        estabelecido na Hero pública), em vez de verde/vermelho genérico
+        de app financeiro — usa a identidade visual da própria marca.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
