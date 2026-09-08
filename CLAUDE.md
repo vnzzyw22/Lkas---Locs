@@ -631,6 +631,44 @@ antes de mexer nisso de novo.
         (`shadow` usando `var(--color-brand-red)`, eco do glow oxblood já
         estabelecido na Hero pública), em vez de verde/vermelho genérico
         de app financeiro — usa a identidade visual da própria marca.
+    - ✅ **`FlowMeter` substituído por gráfico de barras de verdade
+      (2026-09-08):** cliente achou o medidor segmentado "estilo de
+      cobrinha" e pediu um "gráfico desenhado" de verdade (referência:
+      print de um dashboard genérico estilo planilha, barras + donut +
+      área). Avaliei que faz sentido pro nosso caso um gráfico de barras
+      agrupadas (Entradas × Saídas por mês, últimos 6 meses) — não um
+      donut (categorias são texto livre inconsistente, sem taxonomia
+      real) nem área (só 6 pontos mensais, barra é mais direta pra
+      comparar duas séries lado a lado).
+      - **Processo:** usei o skill `dataviz` do zero (`choosing-a-form.md`
+        → job é "tell distinct series apart" + "trend over time" com 2
+        séries = bar chart agrupado, cor categórica). Cores validadas de
+        verdade com `scripts/validate_palette.js` do skill (não
+        escolhidas de olho): slots 6 (verde `#008300`) e 8 (vermelho
+        `#e66767`) da paleta categórica padrão do skill, checados como
+        par pro modo escuro contra a superfície `#1a1a1a` do admin — ΔE
+        CVD 8.6 (>= 8 alvo), ΔE visão normal 32.6, todos os checks
+        passando. Mantém o mesmo significado verde=entrada/vermelho=saída
+        já usado nos cards de resumo e na tabela de lançamentos da mesma
+        página — não introduz uma segunda convenção de cor.
+      - **Implementado em `monthly-trend-chart.tsx`** (SVG puro, sem
+        biblioteca de gráficos — projeto não tinha nenhuma instalada):
+        barras agrupadas com cantos arredondados, gridlines hairline,
+        eixo Y com teto "redondo" (`niceCeiling`), tooltip por barra
+        (hover E foco de teclado, `aria-label` com valor), legenda sempre
+        visível pras 2 séries, toggle "Ver como tabela" (par acessível
+        exigido pelo skill — WCAG-clean equivalent de qualquer gráfico).
+      - **Dado:** `financeiro/page.tsx` agora busca os últimos 6 meses
+        numa única query (`getTransactionsForRange` com range maior) e
+        agrega em memória — sem mudança de schema nem segunda query.
+        `shiftMonth`/`todayISO`, que estavam duplicados entre
+        `finance-view.tsx` e a própria page, centralizados em
+        `src/lib/date.ts`.
+      - **Achado de polish ao testar:** tooltip colava visualmente na
+        linha da legenda (ambos perto do topo do card) — corrigido com
+        mais respiro (`mb-3`→`mb-6`) entre o cabeçalho e o SVG.
+      - Testado em produção via Playwright: hover mostra tooltip correto,
+        toggle de tabela funciona, sem erros de console.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
