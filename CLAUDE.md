@@ -723,6 +723,35 @@ antes de mexer nisso de novo.
       hover) — reaproveitando **exatamente** o estilo do CTA "Agendar
       horário" da Hero em vez de texto+seta solto. Confirmado em
       produção (hover, tamanho, sem overflow em 375px/1366px).
+  - ✅ **Bug real: hover "desproporcional" do deque de fotos + traço do
+    "Sobre" (2026-09-08):**
+    - **Causa raiz encontrada por medição, não achismo:** o cliente
+      relatou o hover das fotos da Hero "desproporcional". Medindo
+      `getBoundingClientRect` (o próprio Playwright recusava o hover
+      com "elemento X intercepts pointer events"), o span `block`
+      "LKAS" do `<h1>` tinha `right: 1287px` — **exatamente** a mesma
+      borda direita do deque de fotos (`.group`, também `right: 1287`)
+      em 1366px de viewport. `display: block` faz o span ocupar a
+      largura inteira da linha mesmo o texto "LKAS" sendo visualmente
+      mais estreito — essa caixa invisível ficava por cima de boa parte
+      da área de hover do deque, roubando o gesto em pontos aleatórios
+      da foto (não era a animação do leque em si, que já estava
+      correta). Corrigido com `pointer-events-none` — não no `<h1>`
+      sozinho (`pointer-events` não afeta o pai que o envolve), no
+      `<div>` que envolve h1 + parágrafo de endereço + fileira mobile
+      (`pointer-events` é propriedade herdada em CSS, cobre os três de
+      uma vez; nenhum precisa capturar ponteiro). Confirmado em
+      produção: hover do Playwright que antes travava com "intercepts
+      pointer events" passou a funcionar limpo, leque abre proporcional.
+    - `about-section.tsx`: `WebkitTextStroke` das palavras vazadas
+      ("Sobre o"/"Locs") reduzido de 1.5px pra 1px — traço grosso
+      demais cruzava os contadores internos de letras largas em
+      maiúsculo (B, E) no peso "black" do Unbounded, prejudicando
+      leitura. Cliente deu 2 opções (reduzir traço ou preenchimento
+      sólido branco); escolhida a redução de traço pra manter
+      consistência com o mesmo tratamento vazado usado em Hero/
+      Serviços/Galeria — só essa instância precisava de ajuste, as
+      outras (que não usam B/E) não foram tocadas.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
