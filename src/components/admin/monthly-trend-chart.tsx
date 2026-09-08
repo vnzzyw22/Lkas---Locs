@@ -79,7 +79,7 @@ export function MonthlyTrendChart({ monthlyTotals }: MonthlyTrendChartProps) {
 
   return (
     <div className="rounded-lg border border-white/10 bg-[#1a1a1a] p-5">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <span className="font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
           Entradas × Saídas — últimos {monthlyTotals.length} meses
         </span>
