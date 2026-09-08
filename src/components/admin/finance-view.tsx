@@ -122,25 +122,50 @@ export function FinanceView({ monthISO, transactions }: FinanceViewProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className={cardClass}>
-          <p className="text-xs text-white/50">Entradas</p>
-          <p className="mt-1 text-lg font-bold text-green-400">
+        <div className="rounded-lg border border-white/10 border-l-4 border-l-green-500/70 bg-[#1a1a1a] p-5">
+          <p className="font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+            Entradas
+          </p>
+          <p className="mt-2 font-label text-2xl font-bold tabular-nums text-green-400">
             {formatPrice(income)}
           </p>
         </div>
-        <div className={cardClass}>
-          <p className="text-xs text-white/50">Saídas</p>
-          <p className="mt-1 text-lg font-bold text-red-400">
+        <div className="rounded-lg border border-white/10 border-l-4 border-l-red-500/70 bg-[#1a1a1a] p-5">
+          <p className="font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+            Saídas
+          </p>
+          <p className="mt-2 font-label text-2xl font-bold tabular-nums text-red-400">
             {formatPrice(expense)}
           </p>
         </div>
-        <div className={cardClass}>
-          <p className="text-xs text-white/50">Saldo</p>
-          <p className="mt-1 text-lg font-bold text-white">
+        <div className="rounded-lg border border-white/10 border-l-4 border-l-brand-red bg-[#1a1a1a] p-5">
+          <p className="font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+            Saldo
+          </p>
+          <p className="mt-2 font-label text-2xl font-bold tabular-nums text-white">
             {formatPrice(income - expense)}
           </p>
         </div>
       </div>
+
+      {income + expense > 0 && (
+        <div className={cardClass}>
+          <div className="mb-2 flex justify-between font-label text-xs tabular-nums text-white/40">
+            <span>{Math.round((income / (income + expense)) * 100)}% entradas</span>
+            <span>{Math.round((expense / (income + expense)) * 100)}% saídas</span>
+          </div>
+          <div className="flex h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="bg-green-500/80"
+              style={{ width: `${(income / (income + expense)) * 100}%` }}
+            />
+            <div
+              className="bg-red-500/80"
+              style={{ width: `${(expense / (income + expense)) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}
@@ -207,44 +232,84 @@ export function FinanceView({ monthISO, transactions }: FinanceViewProps) {
         {error && <p className="w-full text-sm text-red-400">{error}</p>}
       </form>
 
-      <div className="flex flex-col gap-2">
-        {transactions.map((t) => (
-          <div
-            key={t.id}
-            className={`flex flex-wrap items-center gap-x-6 gap-y-2 text-sm ${cardClass}`}
-          >
-            <span className="text-white/40">{formatDate(t.occurred_at)}</span>
-            <span
-              className={
-                t.type === "income"
-                  ? "rounded-full bg-green-500/15 px-2 py-0.5 text-xs text-green-400"
-                  : "rounded-full bg-red-500/15 px-2 py-0.5 text-xs text-red-400"
-              }
-            >
-              {TYPE_LABEL[t.type]}
-            </span>
-            <span className="text-white/60">{t.category ?? "—"}</span>
-            <span className="text-white/40">{t.description ?? "—"}</span>
-            <span className="font-medium text-white">
-              {formatPrice(t.amount)}
-            </span>
-
-            <button
-              type="button"
-              onClick={() => handleDelete(t.id)}
-              className={`ml-auto ${linkDangerClass}`}
-            >
-              Excluir
-            </button>
-          </div>
-        ))}
-
-        {transactions.length === 0 && (
-          <p className="py-4 text-sm text-white/40">
-            Nenhum lançamento nesse mês.
-          </p>
-        )}
-      </div>
+      {transactions.length === 0 ? (
+        <p className="py-4 text-sm text-white/40">
+          Nenhum lançamento nesse mês.
+        </p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-white/10">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/[0.03]">
+                <th className="px-4 py-3 font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  Data
+                </th>
+                <th className="px-4 py-3 font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  Tipo
+                </th>
+                <th className="px-4 py-3 font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  Categoria
+                </th>
+                <th className="px-4 py-3 font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  Descrição
+                </th>
+                <th className="px-4 py-3 text-right font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  Valor
+                </th>
+                <th className="px-4 py-3 text-right font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((t) => (
+                <tr
+                  key={t.id}
+                  className="border-b border-white/5 last:border-0 hover:bg-white/[0.03]"
+                >
+                  <td className="px-4 py-3 whitespace-nowrap text-white/40">
+                    {formatDate(t.occurred_at)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={
+                        t.type === "income"
+                          ? "rounded-full bg-green-500/15 px-2 py-0.5 text-xs text-green-400"
+                          : "rounded-full bg-red-500/15 px-2 py-0.5 text-xs text-red-400"
+                      }
+                    >
+                      {TYPE_LABEL[t.type]}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-white/60">
+                    {t.category ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-white/40">
+                    {t.description ?? "—"}
+                  </td>
+                  <td
+                    className={`px-4 py-3 text-right font-label tabular-nums ${
+                      t.type === "income" ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    {t.type === "income" ? "+ " : "− "}
+                    {formatPrice(t.amount)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(t.id)}
+                      className={linkDangerClass}
+                    >
+                      Excluir
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
