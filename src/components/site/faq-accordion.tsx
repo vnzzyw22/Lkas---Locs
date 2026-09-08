@@ -55,6 +55,11 @@ const FAQS: FaqEntry[] = [
   },
 ];
 
+// Quantidade visível no mobile antes do "Ver todas as perguntas" -- mesmo
+// padrão de corte usado em services-section.tsx (CSS puro, `hidden
+// sm:block`, sem detectar largura em JS pra evitar mismatch de hidratação).
+const MOBILE_VISIBLE_COUNT = 3;
+
 function PlusMinusIcon({ open }: { open: boolean }) {
   return (
     <span
@@ -71,15 +76,18 @@ function PlusMinusIcon({ open }: { open: boolean }) {
   );
 }
 
-function FaqItem({ entry, isOpen, onToggle }: {
+function FaqItem({ entry, isOpen, onToggle, hiddenOnMobile }: {
   entry: FaqEntry;
   isOpen: boolean;
   onToggle: () => void;
+  hiddenOnMobile?: boolean;
 }) {
   const panelId = useId();
 
   return (
-    <div className="border-b border-brand-black/10">
+    <div
+      className={`border-b border-brand-black/10 ${hiddenOnMobile ? "hidden sm:block" : ""}`}
+    >
       <h3>
         <button
           type="button"
@@ -112,6 +120,8 @@ function FaqItem({ entry, isOpen, onToggle }: {
 
 export function FaqAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [showAll, setShowAll] = useState(false);
+  const hasMore = FAQS.length > MOBILE_VISIBLE_COUNT;
 
   return (
     <div className="mt-14 border-t border-brand-black/10">
@@ -121,8 +131,21 @@ export function FaqAccordion() {
           entry={entry}
           isOpen={openIndex === i}
           onToggle={() => setOpenIndex((current) => (current === i ? null : i))}
+          hiddenOnMobile={i >= MOBILE_VISIBLE_COUNT && !showAll}
         />
       ))}
+
+      {hasMore && (
+        <div className="mt-8 flex justify-center sm:hidden">
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="font-label text-xs font-medium tracking-widest text-brand-black uppercase underline decoration-brand-red/40 underline-offset-4 transition-colors hover:text-brand-red"
+          >
+            {showAll ? "Ver menos" : "Ver todas as perguntas frequentes"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

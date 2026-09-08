@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { formatDuration, formatPrice } from "@/lib/format";
 import { Reveal } from "./reveal";
 import type { Service } from "@/lib/supabase/types";
@@ -7,6 +10,14 @@ import type { Service } from "@/lib/supabase/types";
 interface ServicesSectionProps {
   services: Service[];
 }
+
+// Quantidade visível no mobile antes do "Ver todos os serviços" (inclui
+// o card de abertura em largura cheia) -- pedido do cliente pra reduzir
+// o scroll inicial da seção no celular. No desktop (sm:) sempre mostra
+// tudo, independente desse número: a classe `hidden sm:block` cuida
+// disso via CSS puro, sem precisar saber a largura real da tela em JS
+// (evita mismatch de hidratação).
+const MOBILE_VISIBLE_COUNT = 4;
 
 // Foto de fundo só no primeiro serviço (posição 0 — o cliente vai
 // deixar o mais vendido em primeiro via `display_order` no admin).
@@ -31,6 +42,9 @@ const LEAD_PHOTO = "/imagens/foto-tranças-1.jpg";
 // é decorativo (`aria-hidden`) — a ordem real já vem da hierarquia de
 // heading.
 export function ServicesSection({ services }: ServicesSectionProps) {
+  const [showAll, setShowAll] = useState(false);
+  const hasMore = services.length > MOBILE_VISIBLE_COUNT;
+
   return (
     <section id="servicos" className="bg-brand-paper">
       <div className="mx-auto max-w-5xl px-6 py-24 lg:max-w-6xl">
@@ -54,6 +68,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
           Serviços em breve.
         </p>
       ) : (
+        <>
         <div className="mt-14 grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:mt-20 lg:grid-cols-3 lg:gap-x-12 lg:gap-y-20">
           {services.map((service, i) => {
             const isLead = i === 0;
@@ -64,7 +79,12 @@ export function ServicesSection({ services }: ServicesSectionProps) {
               <Reveal
                 key={service.id}
                 delay={Math.min(i, 3) * 0.07}
-                className={isLead ? "sm:col-span-2 lg:col-span-3" : undefined}
+                className={[
+                  isLead && "sm:col-span-2 lg:col-span-3",
+                  i >= MOBILE_VISIBLE_COUNT && !showAll && "hidden sm:block",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               >
                 <article
                   className={
@@ -165,6 +185,19 @@ export function ServicesSection({ services }: ServicesSectionProps) {
             );
           })}
         </div>
+
+        {hasMore && (
+          <div className="mt-10 flex justify-center sm:hidden">
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="font-label text-xs font-medium tracking-widest text-brand-black uppercase underline decoration-brand-red/40 underline-offset-4 transition-colors hover:text-brand-red"
+            >
+              {showAll ? "Ver menos" : "Ver todos os serviços"}
+            </button>
+          </div>
+        )}
+        </>
       )}
       </div>
     </section>
