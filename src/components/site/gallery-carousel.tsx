@@ -76,9 +76,9 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
   };
 
   return (
-    <div className="mx-auto mt-10 max-w-xl lg:max-w-2xl">
+    <div className="mx-auto mt-10 max-w-md lg:max-w-lg">
       <div
-        className="relative aspect-[4/5] touch-pan-y overflow-hidden rounded-2xl bg-neutral-200 ring-1 ring-brand-black/5"
+        className="relative aspect-square touch-pan-y overflow-hidden rounded-2xl bg-neutral-200 ring-1 ring-brand-black/5"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onTouchStart={handleTouchStart}
@@ -104,7 +104,7 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
                     : "Foto da Lkas Locs"
                 }
                 fill
-                sizes="(min-width: 1024px) 640px, 90vw"
+                sizes="(min-width: 1024px) 512px, 80vw"
                 priority={i === 0}
                 className="object-cover"
               />
@@ -114,7 +114,7 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
       </div>
 
       <div
-        className="mt-5 flex items-center justify-between gap-4"
+        className="mt-6 flex items-center justify-between gap-4"
         aria-live="polite"
       >
         <button
@@ -122,12 +122,14 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
           onClick={() => goTo(index - 1)}
           disabled={!canNavigate}
           aria-label="Foto anterior"
-          className="group inline-flex items-center gap-2 font-label text-xs font-medium tracking-widest text-brand-black/70 uppercase transition-colors hover:text-brand-red disabled:pointer-events-none disabled:opacity-30"
+          className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-brand-red text-brand-red transition-colors duration-300 hover:bg-brand-red hover:text-white disabled:pointer-events-none disabled:opacity-30"
         >
-          <span className="transition-transform group-hover:-translate-x-1">
+          <span
+            aria-hidden="true"
+            className="text-base transition-transform group-hover:-translate-x-0.5"
+          >
             ←
           </span>
-          <span className="hidden sm:inline">Anterior</span>
         </button>
 
         <div className="flex flex-col items-center gap-1">
@@ -148,10 +150,12 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
           onClick={() => goTo(index + 1)}
           disabled={!canNavigate}
           aria-label="Próxima foto"
-          className="group inline-flex items-center gap-2 font-label text-xs font-medium tracking-widest text-brand-black/70 uppercase transition-colors hover:text-brand-red disabled:pointer-events-none disabled:opacity-30"
+          className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-brand-red text-brand-red transition-colors duration-300 hover:bg-brand-red hover:text-white disabled:pointer-events-none disabled:opacity-30"
         >
-          <span className="hidden sm:inline">Próximo</span>
-          <span className="transition-transform group-hover:translate-x-1">
+          <span
+            aria-hidden="true"
+            className="text-base transition-transform group-hover:translate-x-0.5"
+          >
             →
           </span>
         </button>
