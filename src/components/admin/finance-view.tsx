@@ -14,12 +14,15 @@ import {
   labelClass,
   linkDangerClass,
 } from "@/components/admin/theme";
+import { MonthlyTrendChart, type MonthlyTotal } from "@/components/admin/monthly-trend-chart";
+import { shiftMonth, todayISO } from "@/lib/date";
 import { formatPrice } from "@/lib/format";
 import type { AdminTransaction, TransactionType } from "@/lib/supabase/types";
 
 interface FinanceViewProps {
   monthISO: string; // "YYYY-MM"
   transactions: AdminTransaction[];
+  monthlyTotals: MonthlyTotal[];
 }
 
 const TYPE_LABEL: Record<TransactionType, string> = {
@@ -27,65 +30,17 @@ const TYPE_LABEL: Record<TransactionType, string> = {
   expense: "Saída",
 };
 
-function shiftMonth(monthISO: string, delta: number) {
-  const [year, month] = monthISO.split("-").map(Number);
-  const date = new Date(year, month - 1 + delta, 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function todayISO() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-  }).format(new Date());
-}
-
 function formatDate(isoDate: string) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(
     new Date(`${isoDate}T00:00:00`),
   );
 }
 
-// Medidor de fluxo entradas/saídas (2026-09-08) — troca a barra genérica
-// verde/vermelho anterior por algo com cara de painel técnico usando a
-// própria identidade da marca: segmentos tipo equalizador acesos em
-// brand-red com leve brilho (echo do glow oxblood já usado na Hero
-// pública, ver hero.tsx), tipografia mono (font-label) pros números.
-const METER_SEGMENTS = 40;
-
-function FlowMeter({ income, expense }: { income: number; expense: number }) {
-  const total = income + expense;
-  const incomePct = total > 0 ? (income / total) * 100 : 0;
-  const expensePct = 100 - incomePct;
-  const filledSegments = Math.round((incomePct / 100) * METER_SEGMENTS);
-
-  return (
-    <div className="rounded-lg border border-white/10 bg-[#1a1a1a] p-5">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 font-label text-xs tracking-widest uppercase">
-        <span className="text-white/40">Fluxo do mês</span>
-        <span className="tabular-nums text-white/60">
-          <span className="text-brand-red">{Math.round(incomePct)}%</span>{" "}
-          entradas
-          <span className="mx-2 text-white/20">/</span>
-          {Math.round(expensePct)}% saídas
-        </span>
-      </div>
-      <div className="flex h-2 gap-[3px]">
-        {Array.from({ length: METER_SEGMENTS }).map((_, i) => (
-          <div
-            key={i}
-            className={
-              i < filledSegments
-                ? "h-full flex-1 rounded-[1px] bg-brand-red shadow-[0_0_6px_var(--color-brand-red)]"
-                : "h-full flex-1 rounded-[1px] bg-white/10"
-            }
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function FinanceView({ monthISO, transactions }: FinanceViewProps) {
+export function FinanceView({
+  monthISO,
+  transactions,
+  monthlyTotals,
+}: FinanceViewProps) {
   const router = useRouter();
 
   const [type, setType] = useState<TransactionType>("income");
@@ -188,9 +143,7 @@ export function FinanceView({ monthISO, transactions }: FinanceViewProps) {
         </div>
       </div>
 
-      {income + expense > 0 && (
-        <FlowMeter income={income} expense={expense} />
-      )}
+      <MonthlyTrendChart monthlyTotals={monthlyTotals} />
 
       <form
         onSubmit={handleSubmit}
