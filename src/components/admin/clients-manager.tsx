@@ -156,48 +156,79 @@ export function ClientsManager({ clients }: ClientsManagerProps) {
         <p className="text-sm text-red-400">{error}</p>
       )}
 
-      <div className="flex flex-col gap-2">
-        {filtered.map((client) => (
-          <div
-            key={client.id}
-            className={`flex flex-wrap items-center gap-x-6 gap-y-2 text-sm ${cardClass}`}
-          >
-            <span className="min-w-32 font-medium text-white">
-              {client.name}
-            </span>
-            <span className="text-white/60">{client.whatsapp ?? "—"}</span>
-            <span className="text-white/40">{client.notes ?? "—"}</span>
-            <span className="text-white/40">
-              Desde {formatDate(client.created_at)}
-            </span>
-
-            <div className="ml-auto flex gap-4">
-              <button
-                type="button"
-                onClick={() => startEdit(client)}
-                className={linkPrimaryClass}
-              >
-                Editar
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDelete(client)}
-                className={linkDangerClass}
-              >
-                Excluir
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {filtered.length === 0 && (
-          <p className="py-4 text-sm text-white/40">
-            {clients.length === 0
-              ? "Nenhum cliente cadastrado ainda."
-              : "Nenhum cliente encontrado."}
-          </p>
-        )}
-      </div>
+      {filtered.length === 0 ? (
+        <p className="py-4 text-sm text-white/40">
+          {clients.length === 0
+            ? "Nenhum cliente cadastrado ainda."
+            : "Nenhum cliente encontrado."}
+        </p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-white/10">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/[0.03]">
+                <th className="px-4 py-3 font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  Nome
+                </th>
+                <th className="px-4 py-3 font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  WhatsApp
+                </th>
+                <th className="px-4 py-3 font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  Observações
+                </th>
+                <th className="px-4 py-3 font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  Desde
+                </th>
+                <th className="px-4 py-3 text-right font-nav text-xs font-bold tracking-widest text-white/40 uppercase">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((client) => (
+                <tr
+                  key={client.id}
+                  className="border-b border-white/5 last:border-0 hover:bg-white/[0.03]"
+                >
+                  <td className="px-4 py-3 font-medium text-white">
+                    {client.name}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-white/60">
+                    {client.whatsapp ?? "—"}
+                  </td>
+                  <td
+                    className="max-w-xs truncate px-4 py-3 text-white/40"
+                    title={client.notes ?? undefined}
+                  >
+                    {client.notes ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-white/40">
+                    {formatDate(client.created_at)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end gap-4">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(client)}
+                        className={linkPrimaryClass}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(client)}
+                        className={linkDangerClass}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

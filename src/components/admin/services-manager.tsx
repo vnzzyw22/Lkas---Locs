@@ -86,6 +86,16 @@ export function ServicesManager({ services }: ServicesManagerProps) {
     const durationMinutes = Number(form.durationMinutes);
     const displayOrder = Number(form.displayOrder) || 0;
 
+    const duplicate = services.find(
+      (s) => s.display_order === displayOrder && s.id !== editingId,
+    );
+    if (duplicate) {
+      setError(
+        `Esse número de ordem já está em uso por "${duplicate.name}". Escolha outro número.`,
+      );
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -210,6 +220,18 @@ export function ServicesManager({ services }: ServicesManagerProps) {
                 }
                 className={fieldClass}
               />
+              {(() => {
+                const duplicate = services.find(
+                  (s) =>
+                    s.display_order === Number(form.displayOrder) &&
+                    s.id !== editingId,
+                );
+                return duplicate ? (
+                  <p className="text-xs text-amber-400">
+                    Número já usado por &quot;{duplicate.name}&quot;.
+                  </p>
+                ) : null;
+              })()}
             </div>
 
             <label className="flex items-center gap-2 pb-2 text-sm text-white/70">

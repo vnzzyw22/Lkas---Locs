@@ -13,8 +13,10 @@ import {
   buttonSecondaryClass,
   cardClass,
   fieldClass,
+  filterButtonClass,
   labelClass,
 } from "@/components/admin/theme";
+import { isHeroCategory } from "@/lib/gallery-categories";
 import type { AdminGalleryPhoto } from "@/lib/supabase/types";
 
 interface GalleryManagerProps {
@@ -23,7 +25,7 @@ interface GalleryManagerProps {
 
 function PhotoCard({ photo }: { photo: AdminGalleryPhoto }) {
   const router = useRouter();
-  const [category, setCategory] = useState(photo.category ?? "");
+  const [isHero, setIsHero] = useState(isHeroCategory(photo.category));
   const [published, setPublished] = useState(photo.published);
   const [displayOrder, setDisplayOrder] = useState(String(photo.display_order));
   const [saving, setSaving] = useState(false);
@@ -34,7 +36,7 @@ function PhotoCard({ photo }: { photo: AdminGalleryPhoto }) {
     setError(null);
 
     const result = await updateGalleryPhoto(photo.id, {
-      category,
+      category: isHero ? "hero" : "",
       published,
       displayOrder: Number(displayOrder) || 0,
     });
@@ -57,24 +59,32 @@ function PhotoCard({ photo }: { photo: AdminGalleryPhoto }) {
       <div className="relative aspect-square overflow-hidden rounded-lg bg-white/5">
         <Image
           src={photo.url}
-          alt={category || "Foto da galeria"}
+          alt="Foto da galeria"
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
           className="object-cover"
         />
       </div>
 
-      <input
-        type="text"
-        placeholder="Categoria"
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        className={fieldClass}
-      />
-      <p className="text-[11px] leading-snug text-white/40">
-        Digite &quot;hero&quot; para exibir no topo do site, ou o nome do
-        serviço para exibir na galeria principal
-      </p>
+      <div className="flex flex-col gap-1.5">
+        <span className={labelClass}>Onde exibir</span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setIsHero(true)}
+            className={filterButtonClass(isHero)}
+          >
+            Principal
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsHero(false)}
+            className={filterButtonClass(!isHero)}
+          >
+            Galeria
+          </button>
+        </div>
+      </div>
 
       <div className="flex items-center gap-2">
         <label className="flex items-center gap-1.5 text-xs text-white/70">
@@ -122,6 +132,7 @@ export function GalleryManager({ photos }: GalleryManagerProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadIsHero, setUploadIsHero] = useState(false);
 
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -129,10 +140,13 @@ export function GalleryManager({ photos }: GalleryManagerProps) {
     setUploadError(null);
 
     try {
-      const result = await uploadGalleryPhoto(new FormData(e.currentTarget));
+      const formData = new FormData(e.currentTarget);
+      formData.set("category", uploadIsHero ? "hero" : "");
+      const result = await uploadGalleryPhoto(formData);
 
       if (result.ok) {
         formRef.current?.reset();
+        setUploadIsHero(false);
         router.refresh();
       } else {
         setUploadError(result.error);
@@ -166,12 +180,23 @@ export function GalleryManager({ photos }: GalleryManagerProps) {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className={labelClass}>Categoria (opcional)</label>
-          <input type="text" name="category" className={fieldClass} />
-          <p className="max-w-56 text-[11px] leading-snug text-white/40">
-            Digite &quot;hero&quot; para exibir no topo do site, ou o nome do
-            serviço para exibir na galeria principal
-          </p>
+          <span className={labelClass}>Onde exibir</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setUploadIsHero(true)}
+              className={filterButtonClass(uploadIsHero)}
+            >
+              Principal
+            </button>
+            <button
+              type="button"
+              onClick={() => setUploadIsHero(false)}
+              className={filterButtonClass(!uploadIsHero)}
+            >
+              Galeria
+            </button>
+          </div>
         </div>
         <button type="submit" disabled={uploading} className={buttonPrimaryClass}>
           {uploading ? "Enviando..." : "Enviar foto"}
