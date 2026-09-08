@@ -669,6 +669,51 @@ antes de mexer nisso de novo.
         mais respiro (`mb-3`→`mb-6`) entre o cabeçalho e o SVG.
       - Testado em produção via Playwright: hover mostra tooltip correto,
         toggle de tabela funciona, sem erros de console.
+  - ✅ **Galeria pública reconstruída — portfólio editorial (2026-09-08):**
+    grade de cards (`gallery-grid.tsx`, removido) substituída por
+    `gallery-carousel.tsx` (`GalleryCarousel`), uma foto por vez, a
+    pedido do cliente (prompt bem detalhado, escopo explicitamente
+    restrito só à seção Galeria — título "NOSSA/GALERIA" e o resto do
+    site intocados).
+    - Track deslizante (`motion.div` com `animate={{x: -index*100%}}`)
+      em vez de `AnimatePresence` com mount/unmount: todas as fotos já
+      ficam montadas desde o início, só a posição/escala mudam —
+      evita re-fetch da imagem a cada troca e o "pulo" de tamanho
+      (frame com `aspect-[4/5]` fixo + `fill`/`object-cover` garante
+      isso também). Como as fotos saem da tela via `transform`, o
+      `next/image` ainda trata as fora de vista como fora da viewport e
+      adia o carregamento normalmente — só a primeira foto usa
+      `priority`.
+    - Setas "← Anterior"/"Próximo →" reaproveitam o idioma visual já
+      existente no site (mono/uppercase, seta anima no hover, vira
+      vermelho — mesmo tratamento do CTA "Agendar →" em
+      `services-section.tsx`) em vez de ícones de biblioteca genérica.
+      Contador "01 / 08" e legenda usam o campo `category` já existente
+      em `gallery_photos` — nenhum dado novo inventado (schema não tem
+      campo de descrição).
+    - Autoplay 5s, pausa no hover (desktop) e durante o toque (mobile,
+      retoma ~4s depois via `setTimeout`), reseta o timer a cada
+      navegação manual (clique ou swipe) — timer some/reaparece de graça
+      só por `index` estar nas dependências do `useEffect` do
+      `setInterval`. Swipe mobile via `onTouchStart`/`onTouchEnd`
+      (delta de `clientX`, sem tracking ao vivo do dedo — mais simples e
+      robusto que combinar `drag` do Framer Motion com o `animate`
+      controlado por índice, que conflitariam no mesmo canal de
+      transform).
+    - `prefers-reduced-motion` (via `useReducedMotion`, mesmo hook já
+      usado em `hero.tsx`/no antigo `gallery-grid.tsx`) reduz a duração
+      da transição de ~850ms pra ~120ms.
+    - ⚠️ **Limitação de teste:** consegui simular hover real (Playwright)
+      e confirmar pausa/retomada do autoplay funcionando (contador
+      parado por 35s com mouse em cima, retomou ~7s depois de tirar);
+      cliques nas setas e wraparound (03→01) confirmados também. **Não
+      consegui** disparar o swipe via `TouchEvent` sintético no Chromium
+      headless (limitação conhecida de automação, não indício de bug —
+      é a mesma função `goTo` já testada pelas setas) — pedir pro
+      cliente confirmar o swipe num celular de verdade antes de fechar
+      como concluído.
+    - Zero erros de console, sem overflow horizontal (375px/1366px
+      testados), `tsc`/`eslint` limpos.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
