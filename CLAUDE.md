@@ -714,6 +714,15 @@ antes de mexer nisso de novo.
       como concluído.
     - Zero erros de console, sem overflow horizontal (375px/1366px
       testados), `tsc`/`eslint` limpos.
+    - ✅ **Feedback do cliente logo em seguida, 2 ajustes:** achou a foto
+      "muito alta" e as setas "muito simples". Corrigido: moldura
+      `aspect-[4/5]` → `aspect-square` (mesma proporção dos cards
+      originais, só que sozinha e maior) + `max-w` reduzido (`xl/2xl` →
+      `md/lg`); setas viraram botões circulares de verdade (`h-11 w-11
+      rounded-full border-2 border-brand-red`, preenche vermelho no
+      hover) — reaproveitando **exatamente** o estilo do CTA "Agendar
+      horário" da Hero em vez de texto+seta solto. Confirmado em
+      produção (hover, tamanho, sem overflow em 375px/1366px).
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
