@@ -752,6 +752,31 @@ antes de mexer nisso de novo.
       consistência com o mesmo tratamento vazado usado em Hero/
       Serviços/Galeria — só essa instância precisava de ajuste, as
       outras (que não usam B/E) não foram tocadas.
+  - ✅ **Primeira leva de estilização mobile (2026-09-08), pedida
+    explicitamente pelo cliente como prioridade:**
+    - **Serviços e FAQ:** ambos mostravam a lista inteira de uma vez no
+      celular (9 serviços, 8 perguntas), rolagem inicial longa demais.
+      Padrão aplicado nos dois: só os primeiros N sempre visíveis
+      (services-section.tsx: 4, incluindo o card de abertura;
+      faq-accordion.tsx: 3) + botão "Ver todos/todas" que expande (e vira
+      "Ver menos"). Corte é **puro CSS** (`hidden sm:block` nos itens
+      além do N-ésimo) em vez de detectar largura em JS — no desktop
+      (`sm:`) sempre mostra tudo independente do estado, sem risco de
+      mismatch de hidratação (SSR e cliente renderizam exatamente as
+      mesmas classes; quem decide visibilidade é o navegador via media
+      query, não React). `services-section.tsx` virou Client Component
+      (`useState` do toggle) — não tinha nenhuma lógica server-only pra
+      perder.
+    - **Hero mobile:** fileira de fotos (`hero-photo-strip.tsx`) ganhou
+      flutuação idle sutil (mesma lógica/decisão do deque desktop —
+      ignora `prefers-reduced-motion` de propósito, já acordado com o
+      cliente antes) e ficou um pouco maior (h-24/w-20 → h-28/w-24) pra
+      ter mais presença, tentando aproximar um pouco da riqueza visual
+      do desktop sem reintroduzir risco de overflow (decalque de acento
+      continua de fora do mobile — foi literalmente a causa do bug de
+      scroll horizontal corrigido antes, não vale a pena arriscar de
+      novo por um ganho estético pequeno).
+    - Ainda no meio da lista de mobile do cliente — mais itens virão.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
