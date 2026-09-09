@@ -47,7 +47,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
 
   return (
     <section id="servicos" className="bg-brand-paper">
-      <div className="mx-auto max-w-5xl px-6 py-24 lg:max-w-6xl">
+      <div className="mx-auto max-w-5xl px-6 py-14 sm:py-24 lg:max-w-6xl">
       <Reveal>
         <div className="flex flex-col items-center gap-4">
           <h2 className="text-center font-display text-4xl leading-none font-black tracking-tight uppercase sm:text-5xl lg:text-6xl">
@@ -69,7 +69,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
         </p>
       ) : (
         <>
-        <div className="mt-14 grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:mt-20 lg:grid-cols-3 lg:gap-x-12 lg:gap-y-20">
+        <div className="mt-8 grid grid-cols-1 gap-x-8 gap-y-10 sm:mt-14 sm:grid-cols-2 sm:gap-y-16 lg:mt-20 lg:grid-cols-3 lg:gap-x-12 lg:gap-y-20">
           {services.map((service, i) => {
             const isLead = i === 0;
             const index = String(i + 1).padStart(2, "0");

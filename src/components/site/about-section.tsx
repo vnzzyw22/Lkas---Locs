@@ -18,7 +18,7 @@ export function AboutSection() {
   return (
     <section
       id="sobre"
-      className="relative overflow-hidden bg-brand-ink px-6 py-24 lg:py-32"
+      className="relative overflow-hidden bg-brand-ink px-6 py-14 sm:py-24 lg:py-32"
     >
       <Image
         src="/imagens/decal-locs-02.png"

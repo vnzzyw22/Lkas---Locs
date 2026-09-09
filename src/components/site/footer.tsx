@@ -44,8 +44,8 @@ export function Footer({ business, services }: FooterProps) {
   ).filter((service): service is Service => Boolean(service));
 
   return (
-    <footer className="bg-brand-ink px-6 pt-20 pb-8">
-      <div className="mx-auto grid max-w-6xl gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+    <footer className="bg-brand-ink px-6 pt-12 pb-8 sm:pt-20">
+      <div className="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2 sm:gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div className="flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
           <Link href="#topo" className="flex items-center gap-2.5">
             <Image
@@ -138,7 +138,7 @@ export function Footer({ business, services }: FooterProps) {
         )}
       </div>
 
-      <div className="mx-auto mt-16 flex max-w-6xl flex-col gap-4 border-t border-brand-cream/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto mt-10 flex max-w-6xl flex-col gap-4 border-t border-brand-cream/10 pt-8 sm:mt-16 sm:flex-row sm:items-center sm:justify-between">
         <p className="font-label text-xs tracking-widest text-brand-smoke uppercase">
           Lkas Locs <span className="text-brand-cream/40">·</span> ©{" "}
           {new Date().getFullYear()} — Todos os direitos reservados.

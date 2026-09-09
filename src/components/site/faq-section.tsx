@@ -14,7 +14,7 @@ import { Reveal } from "./reveal";
 export function FaqSection() {
   return (
     <section id="faq" className="bg-brand-paper">
-      <div className="mx-auto max-w-3xl px-6 py-24">
+      <div className="mx-auto max-w-3xl px-6 py-14 sm:py-24">
         <Reveal>
           <div className="flex flex-col items-start gap-4 text-left">
             <h2 className="font-heading-soft text-4xl leading-none font-bold tracking-tight uppercase sm:text-5xl lg:text-6xl">

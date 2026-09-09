@@ -124,7 +124,7 @@ export function FaqAccordion() {
   const hasMore = FAQS.length > MOBILE_VISIBLE_COUNT;
 
   return (
-    <div className="mt-14 border-t border-brand-black/10">
+    <div className="mt-8 border-t border-brand-black/10 sm:mt-14">
       {FAQS.map((entry, i) => (
         <FaqItem
           key={entry.question}
