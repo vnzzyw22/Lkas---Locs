@@ -777,6 +777,24 @@ antes de mexer nisso de novo.
       scroll horizontal corrigido antes, não vale a pena arriscar de
       novo por um ganho estético pequeno).
     - Ainda no meio da lista de mobile do cliente — mais itens virão.
+  - ✅ **Espaçamento vertical excessivo no mobile (2026-09-09):** cliente
+    mandou print do DevTools mostrando bastante vazio antes de
+    "Perguntas Frequentes" — achado geral, não só do FAQ: `py-24` (96px
+    em cima/embaixo) era **igual pra qualquer tamanho de tela** em
+    Sobre/Contato/FAQ/Galeria/Serviços (`about-section.tsx`,
+    `contact-section.tsx`, `faq-section.tsx`, `gallery-section.tsx`,
+    `services-section.tsx`), sem nenhuma redução pro mobile. Corrigido
+    pra `py-14` (56px) na base + `sm:py-24` restaurando o valor
+    original a partir de 640px — desktop/tablet ficam pixel-idênticos a
+    antes. Mesmo tratamento em espaçamentos internos que somavam ao
+    efeito: `mt-14` do FAQ e do grid de Serviços (`faq-accordion.tsx`,
+    `services-section.tsx`) viraram `mt-8 sm:mt-14`; `gap-y-16` entre
+    cards de Serviços virou `gap-y-10 sm:gap-y-16`; rodapé
+    (`footer.tsx`) teve `pt-20`→`pt-12 sm:pt-20`, `gap-12`→
+    `gap-8 sm:gap-12` entre colunas, `mt-16`→`mt-10 sm:mt-16` antes da
+    barra de copyright. Confirmado em produção: FAQ visivelmente mais
+    compacto no celular, desktop (1366px) inalterado, sem overflow em
+    nenhuma largura testada (375px/1366px).
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
