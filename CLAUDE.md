@@ -795,6 +795,17 @@ antes de mexer nisso de novo.
     barra de copyright. Confirmado em produção: FAQ visivelmente mais
     compacto no celular, desktop (1366px) inalterado, sem overflow em
     nenhuma largura testada (375px/1366px).
+  - ✅ **Mensagem de WhatsApp do agendamento reescrita (2026-09-09):** template
+    formal (`buildBookingMessage`, `src/lib/whatsapp.ts`) substituído por tom
+    "street/urbano" alinhado à identidade da marca, a pedido do cliente —
+    cabeçalho `📱 *Lkas Locs | Solicitação de Agendamento*`, negrito nativo do
+    WhatsApp (`*texto*`) nos campos Serviço/Data/Horário/Observação, emojis
+    como marcador visual de cada linha, fechamento "Tamo junto!👊🔥". Variáveis
+    já existentes reaproveitadas sem mudança de assinatura: `clientName`,
+    `serviceName`, `dateLabel`, `timeLabel` (ganhou sufixo `h`), `notes`
+    (linha `💬 *Observação:*` continua condicional — só aparece se o cliente
+    escreveu algo, mesmo comportamento de antes). `getWhatsappLink()` já
+    aplicava `encodeURIComponent` na mensagem inteira, nada mudou aí.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
