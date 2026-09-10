@@ -795,6 +795,44 @@ antes de mexer nisso de novo.
     barra de copyright. Confirmado em produção: FAQ visivelmente mais
     compacto no celular, desktop (1366px) inalterado, sem overflow em
     nenhuma largura testada (375px/1366px).
+  - ✅ **Hero mobile: fundo em vídeo** (2026-09-10): `hero-photo-strip.tsx`
+    removido; substituído por `hero-mobile-video.tsx` (vídeo de fundo,
+    exclusivo mobile — `/videos/lkas-hero-mobile.mp4`, cliente forneceu)
+    e `hero-photo-collage.tsx` (colagem de 1 foto principal + 2
+    secundárias sobrepostas, também exclusiva mobile). Desktop
+    inalterado (deque/leque de fotos de sempre).
+    - Vídeo só existe no DOM abaixo de 640px (`matchMedia` em JS via
+      `useSyncExternalStore`, não só CSS) — nunca baixado no desktop.
+      Overlay `bg-brand-ink/60` por cima pra manter legibilidade (vídeo
+      tem trechos bem claros — testado em `/80`, ficava indistinguível
+      de preto sólido).
+    - ⚠️ **Bug real, difícil de achar — `<video>` nunca pinta na tela:**
+      vídeo tocava normalmente (`paused:false`, `currentTime` avançando,
+      `readyState:4`, sem erro) mas ficava preto sólido no Chrome real
+      do cliente. Isolado por bissecção numa página de teste descartável
+      (réplica da estrutura de fundo do Hero fora do resto da página,
+      testando position/overflow/z-index um de cada vez): a causa era
+      **z-index negativo** (`-z-10`, usado pra empilhar o fundo atrás do
+      conteúdo) em algum ancestral do vídeo — nessa combinação de
+      GPU/driver do Chrome, isso quebra a composição por hardware do
+      `<video>` (API de reprodução funciona normal, só não pinta).
+      Não tinha relação com codec, overflow:hidden, autoplay, Framer
+      Motion ou GSAP. Corrigido removendo o z-index negativo dos
+      wrappers de fundo (vídeo e glow/decalque) — a ordem visual agora
+      depende só da ordem do DOM, não de z-index. **Lição:** se um
+      `<video>` "toca mas não aparece" (estado saudável via JS, tela
+      preta, sem erro nenhum), suspeitar de z-index negativo em
+      ancestral antes de investigar codec/GPU a fundo.
+    - Inicialização do vídeo também reforçada (`ref`+`useEffect`):
+      `muted` setado explicitamente antes do `play()`, com fallback em
+      `loadedmetadata`/`canplay` — não depende só do atributo `autoPlay`
+      (frágil quando o elemento é montado dinamicamente pelo React via
+      `<source>` filho).
+    - 🔲 **Colagem de fotos removida a título de teste** (a pedido do
+      cliente, "quero ver como fica só com o vídeo") — `hero.tsx` não
+      renderiza mais `<HeroPhotoCollage>`, mas o componente continua no
+      código (`hero-photo-collage.tsx`), fácil de reativar. Decisão
+      final (com fotos ou só vídeo) ainda pendente do cliente.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)

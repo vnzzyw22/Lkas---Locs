@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { HeroPhotoDeck } from "./hero-photo-deck";
-import { HeroPhotoStrip } from "./hero-photo-strip";
+import { HeroMobileVideoBackground } from "./hero-mobile-video";
 import type { BusinessSettings, GalleryPhoto } from "@/lib/supabase/types";
 
 interface HeroProps {
@@ -71,7 +71,22 @@ export function Hero({ business, photos }: HeroProps) {
       ref={sectionRef}
       className="relative overflow-x-hidden bg-brand-ink pt-16 text-brand-cream"
     >
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+      {/* SEM z-index negativo de propósito: testado isoladamente (página de
+          diagnóstico à parte) e confirmado — nesta combinação de GPU/driver
+          do Chrome, um <video> com z-index negativo em algum ancestral
+          nunca pinta na tela (toca normalmente pela API, currentTime
+          avança, mas fica preto). Sem z-index negativo nenhum, a ordem do
+          DOM já garante o empilhamento correto: este bloco vem primeiro =
+          fica atrás do glow/decalque abaixo, que por sua vez fica atrás do
+          conteúdo (`z-20`, mais abaixo). */}
+      <div className="pointer-events-none absolute inset-0">
+        <HeroMobileVideoBackground />
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {/* glow radial + decalque em marca d'água — inalterados, continuam
+            valendo (e sobrepondo o vídeo) tanto no mobile quanto no
+            desktop. */}
         <div
           ref={bgRef}
           className="absolute inset-0"
@@ -161,13 +176,6 @@ export function Hero({ business, photos }: HeroProps) {
           >
             {business?.address ?? "Maringá — PR"}
           </motion.p>
-
-          {/* fileira estática só pro mobile — ver hero-photo-strip.tsx.
-              Acima de sm, o deque com leque/parallax (HeroPhotoDeck) já
-              cobre isso. */}
-          <motion.div variants={fadeUp} className="mt-6">
-            <HeroPhotoStrip photos={photos} />
-          </motion.div>
         </div>
 
         <div className="mt-auto flex flex-wrap items-end justify-between gap-8 pt-8">
