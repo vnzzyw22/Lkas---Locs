@@ -877,6 +877,75 @@ antes de mexer nisso de novo.
     - Testado localmente (Playwright avulso, não o MCP) em 1366px e
       390px: vídeo visível e tocando nos dois, texto legível, sem erros
       de console.
+  - ✅ **Limpeza de dados de teste + SEO básico (2026-09-13):** primeiros
+    passos rumo a comercializar de verdade. Cliente ainda não fechou
+    acordo com o dono do negócio — por isso só o que é 100% código (não
+    depende do acordo) foi feito agora; domínio próprio, Google Meu
+    Negócio e o texto final da política de privacidade/termos ficam pra
+    depois do acordo fechado.
+    - **Dados de teste removidos do banco real:** 12 clientes de teste
+      (`eter`, os "Vinicius" variados usados pra teste do próprio
+      desenvolvedor, `vini`, `teste 02`, `Teste 01`, `Teste 04/09`,
+      `Teste QA Playwright`) e os 12 agendamentos vinculados a eles,
+      excluídos via o próprio painel admin (Playwright dirigindo o
+      navegador, autenticado como admin) depois de mapear cada um com
+      cuidado (nome do cliente confirmado abrindo o agendamento, não só
+      contando quantidade). **Lição registrada:** contar "N clientes, N
+      agendamentos" e assumir correspondência 1-para-1 por posição foi
+      um erro — um cliente (`eter`) ficou de fora do mapeamento inicial
+      porque o agendamento dele estava numa semana que não tinha sido
+      conferida ainda, e só apareceu quando a exclusão do cliente falhou
+      com erro de FK. Mapeamento correto exige abrir cada agendamento e
+      ler o nome do cliente de verdade.
+    - **Botão "Excluir" agendamento, novo no painel** (Agenda →
+      selecionar horário → "Excluir", ao lado de Confirmar/Cancelar):
+      `deleteAppointment` em `src/app/admin/(painel)/agenda/actions.ts`.
+      Antes só existia "Cancelar" (muda status, não apaga a linha) — sem
+      isso não dava pra limpar de vez um agendamento de teste, só
+      cancelar e deixar no histórico pra sempre. Mensagem de erro ao
+      excluir cliente com agendamento vinculado
+      (`src/app/admin/(painel)/clientes/actions.ts`) atualizada pra
+      indicar esse caminho.
+    - ⚠️ **Achado sobre automação:** o classificador de "auto mode" do
+      Claude Code bloqueou tentativas de rodar a exclusão em massa via
+      script (Playwright) mesmo com autorização explícita do cliente no
+      chat — categorias "Irreversible Deletion"/"Cloud Storage Mass
+      Delete". É configurável via `autoMode.allow` no `settings.json`,
+      mas decidido não mexer nisso (risco de afrouxar mais do que o
+      necessário sem confirmar a sintaxe certa) — a exclusão em massa
+      feita por mim foi abandonada; o cliente excluiu manualmente pelo
+      painel a partir da lista que eu mapeei.
+    - **SEO básico implementado** (só código, sem depender do acordo):
+      - `src/lib/site-url.ts`: URL do site derivada do ambiente
+        (`NEXT_PUBLIC_SITE_URL` > `VERCEL_URL` > fallback local) — mesmo
+        espírito de não fixar nada no código do hostname do Supabase em
+        `next.config.ts`, importante pro modelo de reuso.
+      - `src/app/sitemap.ts` e `src/app/robots.ts` (convenções do App
+        Router) — só as rotas públicas (`/`, `/agendar`); `/admin`
+        explicitamente bloqueado no `robots.txt`.
+      - `src/app/layout.tsx`: `metadata` estático virou
+        `generateMetadata()` buscando `business_settings` (nome,
+        endereço) em vez de fixar "Lkas Locs" — Open Graph + Twitter
+        Card adicionados.
+      - `src/app/opengraph-image.tsx`: imagem de prévia de
+        compartilhamento gerada em código (`next/og`/`ImageResponse`),
+        cacheada no build, sem depender de arquivo estático nem do
+        banco. **Achado real:** `WebkitTextStroke` (o efeito de contorno
+        vazado usado no wordmark da Hero) não é suportado pelo Satori
+        (motor por trás do `ImageResponse`) — o texto "LOCS" ficava
+        completamente invisível (`color: transparent` + stroke ignorado
+        = nada renderizado). Corrigido trocando por texto sólido nessa
+        imagem específica; não afeta o wordmark real do site (que usa
+        CSS de navegador de verdade, `WebkitTextStroke` funciona normal
+        lá).
+      - `src/lib/business-hours.ts`: nova `toSchemaOpeningHours()`
+        converte o `business_hours` jsonb pro formato schema.org
+        (`OpeningHoursSpecification`), reaproveitada em `page.tsx` pro
+        JSON-LD (`HairSalon`: nome, endereço, telefone, horário) — ajuda
+        o Google a entender que é um negócio local.
+      - Testado via `curl` no servidor local: `/sitemap.xml`,
+        `/robots.txt`, meta tags OG/Twitter e o JSON-LD todos corretos e
+        puxando dado real de `business_settings`, não fixo.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
