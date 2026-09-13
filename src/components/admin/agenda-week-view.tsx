@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   createBlockedSlot,
+  deleteAppointment,
   deleteBlockedSlot,
   updateAppointmentStatus,
 } from "@/app/admin/(painel)/agenda/actions";
@@ -14,6 +15,7 @@ import {
   fieldClass,
   filterButtonClass,
   labelClass,
+  linkDangerClass,
 } from "@/components/admin/theme";
 import { formatPrice } from "@/lib/format";
 import { getWhatsappLink } from "@/lib/whatsapp";
@@ -125,6 +127,29 @@ export function AgendaWeekView({
     setActionError(null);
     const result = await updateAppointmentStatus(id, status);
     setStatusUpdating(false);
+    if (result.ok) {
+      setSelection(null);
+      router.refresh();
+    } else {
+      setActionError(result.error);
+    }
+  }
+
+  async function handleDeleteAppointment(appointment: AdminAppointment) {
+    const label = appointment.client?.name ?? "esse agendamento";
+    if (
+      !confirm(
+        `Excluir o agendamento de "${label}"? Essa ação não pode ser desfeita.`,
+      )
+    ) {
+      return;
+    }
+
+    setStatusUpdating(true);
+    setActionError(null);
+    const result = await deleteAppointment(appointment.id);
+    setStatusUpdating(false);
+
     if (result.ok) {
       setSelection(null);
       router.refresh();
@@ -348,6 +373,14 @@ export function AgendaWeekView({
               className="font-nav text-xs font-bold tracking-widest text-white/40 uppercase hover:text-white"
             >
               Fechar
+            </button>
+            <button
+              type="button"
+              disabled={statusUpdating}
+              onClick={() => handleDeleteAppointment(selection.data)}
+              className={`ml-auto ${linkDangerClass}`}
+            >
+              Excluir
             </button>
           </div>
         </div>

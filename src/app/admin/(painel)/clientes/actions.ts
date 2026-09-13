@@ -45,7 +45,8 @@ export async function deleteClient(id: string): Promise<ActionResult> {
     if (error.code === "23503") {
       return {
         ok: false,
-        error: "Esse cliente tem agendamentos no histórico e não pode ser excluído.",
+        error:
+          "Esse cliente tem agendamentos no histórico — exclua os agendamentos dele na Agenda antes de excluir o cliente.",
       };
     }
     console.error("Erro ao excluir client:", error.message);

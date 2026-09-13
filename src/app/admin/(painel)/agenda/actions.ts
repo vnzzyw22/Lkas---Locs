@@ -36,6 +36,19 @@ interface CreateBlockedSlotInput {
   reason: string;
 }
 
+export async function deleteAppointment(id: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("appointments").delete().eq("id", id);
+
+  if (error) {
+    console.error("Erro ao excluir appointment:", error.message);
+    return { ok: false, error: "Não foi possível excluir o agendamento." };
+  }
+
+  revalidateAgenda();
+  return { ok: true };
+}
+
 export async function createBlockedSlot(
   input: CreateBlockedSlotInput,
 ): Promise<ActionResult> {
