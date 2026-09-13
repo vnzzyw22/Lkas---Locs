@@ -7,6 +7,18 @@ const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
   : undefined;
 
 const nextConfig: NextConfig = {
+  // Fase 6 (brand-outro): browser real do cliente pediu esse mesmo vídeo
+  // sem a extensão .mp4 e recebia 404 — nunca reproduzido via curl, só no
+  // navegador dele, causa exata não identificada. Rewrite defensivo mantido
+  // como rede de segurança pro vídeo de fundo da Hero.
+  async rewrites() {
+    return [
+      {
+        source: "/imagens/video-marca-lkas",
+        destination: "/imagens/video-marca-lkas.mp4",
+      },
+    ];
+  },
   // Server Actions (usado no upload de foto da Galeria) limitam o corpo da
   // requisição a 1MB por padrão — menor que o limite de 5MB que o próprio
   // formulário anuncia (src/app/admin/(painel)/galeria/actions.ts). Sem

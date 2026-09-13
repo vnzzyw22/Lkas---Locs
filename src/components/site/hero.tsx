@@ -71,7 +71,34 @@ export function Hero({ business, photos }: HeroProps) {
       ref={sectionRef}
       className="relative overflow-x-hidden bg-brand-ink pt-16 text-brand-cream"
     >
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden bg-brand-ink">
+        {/* Vídeo de fundo real da marca. Estático e eager de propósito (sem
+            IntersectionObserver/lazy) — a Hero é a primeira coisa vista, e a
+            versão "sem inteligência nenhuma" foi a única que se confirmou
+            funcionando de ponta a ponta da última vez que tentamos isso
+            (ver CLAUDE.md > Fase 6 > Brand Outro). Autoplay ignora
+            prefers-reduced-motion de propósito, mesma decisão já tomada
+            pra flutuação idle das fotos da Hero.
+            IMPORTANTE: este wrapper precisa de z-index >= 0, nunca negativo.
+            <video> com z-index negativo (ou dentro de um ancestral com
+            z-index negativo) simplesmente não é pintado pelo Chromium — toca
+            normalmente (currentTime avança, decodificável via canvas) mas
+            fica invisível na tela. Confirmado isolando o bug com testes
+            (z-index:-10 sempre invisível, z-index:0 sempre visível, com/sem
+            overflow:hidden não muda nada). O conteúdo (z-20 mais abaixo)
+            continua na frente só pela ordem do DOM. */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+          src="/imagens/video-marca-lkas.mp4"
+        />
+        <div className="absolute inset-0 bg-brand-ink/70" />
+
         <div
           ref={bgRef}
           className="absolute inset-0"
@@ -79,19 +106,6 @@ export function Hero({ business, photos }: HeroProps) {
             background:
               "radial-gradient(60% 55% at 78% 18%, var(--color-brand-oxblood) 0%, transparent 65%), radial-gradient(50% 45% at 12% 85%, var(--color-brand-oxblood) 0%, transparent 60%)",
           }}
-        />
-
-        {/* decalque real em marca d'água: textura de fundo, escala gigante,
-            sangrando pelas bordas — ver public/imagens/decal-locs-02.png e
-            scripts/process-decals.mjs (gerado a partir do jpg fornecido
-            pelo cliente, fundo tornado transparente de verdade) */}
-        <Image
-          src="/imagens/decal-locs-02.png"
-          alt=""
-          aria-hidden="true"
-          width={926}
-          height={751}
-          className="absolute -bottom-16 -left-24 w-[75vw] max-w-[880px] min-w-[420px] -rotate-6 opacity-[0.08]"
         />
       </div>
 
