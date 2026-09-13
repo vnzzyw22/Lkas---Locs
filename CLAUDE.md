@@ -806,46 +806,77 @@ antes de mexer nisso de novo.
     (linha `💬 *Observação:*` continua condicional — só aparece se o cliente
     escreveu algo, mesmo comportamento de antes). `getWhatsappLink()` já
     aplicava `encodeURIComponent` na mensagem inteira, nada mudou aí.
-  - ✅ **Hero: remove decalque de fundo da esquerda + adiciona vídeo de fundo
-    real (2026-09-13):** dois pedidos do cliente na mesma sessão.
+  - ✅ **Hero mobile: fundo em vídeo** (2026-09-10): `hero-photo-strip.tsx`
+    removido; substituído por `hero-mobile-video.tsx` (vídeo de fundo,
+    exclusivo mobile — `/videos/lkas-hero-mobile.mp4`, cliente forneceu)
+    e `hero-photo-collage.tsx` (colagem de 1 foto principal + 2
+    secundárias sobrepostas, também exclusiva mobile). Desktop
+    inalterado (deque/leque de fotos de sempre).
+    - Vídeo só existe no DOM abaixo de 640px (`matchMedia` em JS via
+      `useSyncExternalStore`, não só CSS) — nunca baixado no desktop.
+      Overlay `bg-brand-ink/60` por cima pra manter legibilidade (vídeo
+      tem trechos bem claros — testado em `/80`, ficava indistinguível
+      de preto sólido).
+    - ⚠️ **Bug real, difícil de achar — `<video>` nunca pinta na tela:**
+      vídeo tocava normalmente (`paused:false`, `currentTime` avançando,
+      `readyState:4`, sem erro) mas ficava preto sólido no Chrome real
+      do cliente. Isolado por bissecção numa página de teste descartável
+      (réplica da estrutura de fundo do Hero fora do resto da página,
+      testando position/overflow/z-index um de cada vez): a causa era
+      **z-index negativo** (`-z-10`, usado pra empilhar o fundo atrás do
+      conteúdo) em algum ancestral do vídeo — nessa combinação de
+      GPU/driver do Chrome, isso quebra a composição por hardware do
+      `<video>` (API de reprodução funciona normal, só não pinta).
+      Não tinha relação com codec, overflow:hidden, autoplay, Framer
+      Motion ou GSAP. Corrigido removendo o z-index negativo dos
+      wrappers de fundo (vídeo e glow/decalque) — a ordem visual agora
+      depende só da ordem do DOM, não de z-index. **Lição:** se um
+      `<video>` "toca mas não aparece" (estado saudável via JS, tela
+      preta, sem erro nenhum), suspeitar de z-index negativo em
+      ancestral antes de investigar codec/GPU a fundo.
+    - Inicialização do vídeo também reforçada (`ref`+`useEffect`):
+      `muted` setado explicitamente antes do `play()`, com fallback em
+      `loadedmetadata`/`canplay` — não depende só do atributo `autoPlay`
+      (frágil quando o elemento é montado dinamicamente pelo React via
+      `<source>` filho).
+    - 🔲 **Colagem de fotos removida a título de teste** (a pedido do
+      cliente, "quero ver como fica só com o vídeo") — `hero.tsx` não
+      renderiza mais `<HeroPhotoCollage>`, mas o componente continua no
+      código (`hero-photo-collage.tsx`), fácil de reativar. Decisão
+      final (com fotos ou só vídeo) ainda pendente do cliente.
+  - ✅ **Hero: remove decalque da esquerda + vídeo de fundo também no
+    desktop (2026-09-13):** dois pedidos do cliente na mesma sessão.
     - `decal-locs-02.png` (marca d'água gigante no canto inferior esquerdo,
-      atrás do wordmark) removido de `hero.tsx` a pedido do cliente — mantido
-      só o `decal-locs-01.png` (tranças ao lado das fotos, à direita), que
-      não foi mencionado.
-    - Cliente lembrava (incorretamente) de já existir vídeo de fundo na Hero
-      mobile; conferido que não existe vídeo em lugar nenhum do site hoje — a
-      única tentativa (`brand-outro.tsx`, Sobre/Contato/Rodapé) foi removida
-      por completo na Fase 6. Alinhado com o cliente: vídeo novo, só na Hero.
-    - ⚠️ **Bug real encontrado, provável causa raiz das dificuldades
-      anteriores com vídeo de fundo:** `<video>` com `z-index` negativo em
-      qualquer ancestral simplesmente não é pintado pelo Chromium — o vídeo
-      continua tocando normalmente por baixo (`currentTime` avança,
-      decodificável via `canvas.drawImage`), só não aparece na tela. Isolado
-      com testes controlados via Playwright (`z-index:-10` sempre invisível,
-      `z-index:0` sempre visível, com/sem `overflow:hidden` não muda nada).
-      O wrapper de fundo da Hero usava `-z-10` desde a Fase 5 — funcionava
-      pra imagens/gradiente (que não têm esse problema), mas quebra qualquer
-      `<video>` colocado ali. Corrigido trocando por `z-0`; o conteúdo
-      continua na frente só pela ordem do DOM (`z-20` explícito no wrapper de
-      conteúdo já bastava).
-    - Implementado: `public/imagens/video-marca-lkas.mp4` (mesmo arquivo já
-      existente no projeto desde a Fase 6) como `<video autoPlay loop muted
-      playsInline preload="auto">` estático — **sem** `IntersectionObserver`/
-      carregamento sob demanda de propósito (a Hero é above-the-fold, e essa
-      é a única versão que já se confirmou funcionando de ponta a ponta
-      antes). Véu escuro (`bg-brand-ink/70`) entre o vídeo e o glow/conteúdo
-      pra manter contraste do texto em qualquer trecho do vídeo (do clipe
-      animado claro no início ao vídeo real mais escuro depois — os dois
-      testados). `object-fit: cover` lida com o vídeo (848×478, ~16:9) não
-      bater com o formato bem mais largo da Hero no notebook — corta em vez
-      de distorcer.
-    - `next.config.ts` ganhou de volta o `rewrites()` mapeando
-      `/imagens/video-marca-lkas` → `.mp4` (mesma rede de segurança da Fase
-      6, pro caso do 404 sem extensão só visto no navegador real do cliente
-      voltar a acontecer).
-    - Testado via servidor local (Playwright avulso, não o MCP) em
-      1366px/390px — vídeo visível, tocando, texto legível, sem erros de
-      console.
+      atrás do wordmark) removido de `hero.tsx` — mantido só o
+      `decal-locs-01.png` (tranças ao lado das fotos, à direita), que não
+      foi mencionado.
+    - Cliente lembrava do vídeo de fundo já existir no mobile (bullet
+      acima, 2026-09-10) e pediu o mesmo vídeo no notebook. Na hora, um
+      `git log`/leitura de código deu a entender que não existia vídeo
+      nenhum — na verdade o checkout local desta sessão só estava
+      desatualizado (não tinha esse commit ainda). Só percebido ao tentar
+      dar `git push` e o remoto rejeitar — **lição: rodar `git fetch`
+      logo no início da sessão, não só confiar no `git log` local,
+      principalmente quando o cliente descreve um estado que não bate com
+      o que o código mostra.**
+    - Cheguei a implementar um `<video>` de fundo próprio reaproveitando
+      `video-marca-lkas.mp4` (o vídeo antigo da Fase 6, removido do
+      `brand-outro.tsx`) antes de descobrir o trabalho já existente — essa
+      implementação foi **descartada** no merge. Versão final: generalizado
+      o componente do mobile (`hero-mobile-video.tsx` →
+      `hero-video-background.tsx`, `HeroMobileVideoBackground` →
+      `HeroVideoBackground`) removendo a checagem `matchMedia` de largura —
+      mesmo vídeo (`/videos/lkas-hero-mobile.mp4`), mesma inicialização
+      reforçada de `play()`/`muted` e hack de GPU (`translateZ(0)`) do
+      bullet acima, agora tocando em qualquer largura de tela. Overlay
+      `bg-brand-ink/60` mantido como já validado (pixel-testado) ali —
+      não reinventado.
+    - `next.config.ts`: cheguei a adicionar de volta um rewrite defensivo
+      pro `video-marca-lkas.mp4` (não usado em lugar nenhum do Hero) —
+      revertido junto no merge, por não ter mais relação com nada.
+    - Testado localmente (Playwright avulso, não o MCP) em 1366px e
+      390px: vídeo visível e tocando nos dois, texto legível, sem erros
+      de console.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
