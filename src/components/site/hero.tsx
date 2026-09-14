@@ -91,7 +91,7 @@ export function Hero({ business, photos }: HeroProps) {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(60% 55% at 78% 18%, var(--color-brand-oxblood) 0%, transparent 65%), radial-gradient(50% 45% at 12% 85%, var(--color-brand-oxblood) 0%, transparent 60%)",
+              "radial-gradient(50% 45% at 12% 85%, var(--color-brand-oxblood) 0%, transparent 60%)",
           }}
         />
       </div>
