@@ -74,6 +74,14 @@ export function ServicesSection({ services }: ServicesSectionProps) {
             const isLead = i === 0;
             const index = String(i + 1).padStart(2, "0");
             const tiltRight = i % 2 === 1;
+            // Nome de 1 palavra só (ex.: "Manutenção") não tem espaço pra
+            // quebrar linha — em vez de partir a palavra ao meio
+            // (`break-words`, rejeitado: ficava feio) ou deixar cortar
+            // (bug original), usa tamanho menor + `nowrap` só nesse caso.
+            // Nome de várias palavras (ex.: "Terapeuta Capilar") continua
+            // quebrando normalmente no espaço, sem precisar de tratamento
+            // especial.
+            const isSingleWord = !service.name.trim().includes(" ");
 
             return (
               <Reveal
@@ -89,7 +97,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                 <article
                   className={
                     isLead
-                      ? "relative flex min-h-[160px] flex-col justify-end gap-6 overflow-hidden rounded-xl p-8 text-brand-cream sm:min-h-[190px] sm:rounded-2xl sm:p-10 lg:min-h-[220px] lg:flex-row lg:items-end lg:justify-between lg:gap-12 lg:rounded-3xl lg:p-12"
+                      ? "relative flex min-h-[160px] flex-col justify-end gap-6 overflow-hidden rounded-xl p-6 text-brand-cream sm:min-h-[190px] sm:rounded-2xl sm:p-10 lg:min-h-[220px] lg:flex-row lg:items-end lg:justify-between lg:gap-12 lg:rounded-3xl lg:p-12"
                       : "flex flex-col border-t border-brand-black/10 pt-6"
                   }
                 >
@@ -120,7 +128,11 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                     <h3
                       className={`font-display font-black tracking-tight uppercase ${
                         isLead
-                          ? "-mt-3 text-4xl sm:text-5xl lg:-mt-5 lg:text-6xl xl:text-7xl"
+                          ? `-mt-3 sm:text-5xl lg:-mt-5 lg:text-6xl xl:text-7xl ${
+                              isSingleWord
+                                ? "text-[8vw] whitespace-nowrap sm:whitespace-normal"
+                                : "text-4xl"
+                            }`
                           : "-mt-2 text-xl text-brand-black lg:text-2xl"
                       }`}
                     >
