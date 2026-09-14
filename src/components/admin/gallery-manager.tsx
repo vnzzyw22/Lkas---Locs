@@ -68,25 +68,25 @@ function PhotoCard({ photo }: { photo: AdminGalleryPhoto }) {
 
       <div className="flex flex-col gap-1.5">
         <span className={labelClass}>Onde exibir</span>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setIsHero(true)}
-            className={filterButtonClass(isHero)}
+            className={`flex-1 ${filterButtonClass(isHero)}`}
           >
             Principal
           </button>
           <button
             type="button"
             onClick={() => setIsHero(false)}
-            className={filterButtonClass(!isHero)}
+            className={`flex-1 ${filterButtonClass(!isHero)}`}
           >
             Galeria
           </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-1.5 text-xs text-white/70">
           <input
             type="checkbox"
@@ -99,14 +99,14 @@ function PhotoCard({ photo }: { photo: AdminGalleryPhoto }) {
           type="number"
           value={displayOrder}
           onChange={(e) => setDisplayOrder(e.target.value)}
-          className={`w-16 ${fieldClass}`}
+          className={`w-16 shrink-0 ${fieldClass}`}
           title="Ordem de exibição"
         />
       </div>
 
       {error && <p className="text-xs text-red-400">{error}</p>}
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={handleSave}
@@ -118,7 +118,7 @@ function PhotoCard({ photo }: { photo: AdminGalleryPhoto }) {
         <button
           type="button"
           onClick={handleDelete}
-          className={buttonSecondaryClass}
+          className={`flex-1 text-center ${buttonSecondaryClass}`}
         >
           Excluir
         </button>
@@ -167,7 +167,7 @@ export function GalleryManager({ photos }: GalleryManagerProps) {
       <form
         ref={formRef}
         onSubmit={handleUpload}
-        className={`flex flex-wrap items-end gap-3 ${cardClass}`}
+        className={`flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-end ${cardClass}`}
       >
         <div className="flex flex-col gap-1.5">
           <label className={labelClass}>Foto</label>
@@ -176,29 +176,33 @@ export function GalleryManager({ photos }: GalleryManagerProps) {
             name="file"
             accept="image/*"
             required
-            className="text-sm text-white/70 file:mr-3 file:rounded-full file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:font-bold file:tracking-widest file:text-white file:uppercase"
+            className="w-full text-sm text-white/70 file:mr-3 file:rounded-full file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:font-bold file:tracking-widest file:text-white file:uppercase"
           />
         </div>
         <div className="flex flex-col gap-1.5">
           <span className={labelClass}>Onde exibir</span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setUploadIsHero(true)}
-              className={filterButtonClass(uploadIsHero)}
+              className={`flex-1 sm:flex-none ${filterButtonClass(uploadIsHero)}`}
             >
               Principal
             </button>
             <button
               type="button"
               onClick={() => setUploadIsHero(false)}
-              className={filterButtonClass(!uploadIsHero)}
+              className={`flex-1 sm:flex-none ${filterButtonClass(!uploadIsHero)}`}
             >
               Galeria
             </button>
           </div>
         </div>
-        <button type="submit" disabled={uploading} className={buttonPrimaryClass}>
+        <button
+          type="submit"
+          disabled={uploading}
+          className={`w-full sm:w-auto ${buttonPrimaryClass}`}
+        >
           {uploading ? "Enviando..." : "Enviar foto"}
         </button>
         {uploadError && (
@@ -209,7 +213,7 @@ export function GalleryManager({ photos }: GalleryManagerProps) {
       {photos.length === 0 ? (
         <p className="text-sm text-white/40">Nenhuma foto na galeria ainda.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {photos.map((photo) => (
             <PhotoCard key={photo.id} photo={photo} />
           ))}

@@ -833,6 +833,23 @@ antes de mexer nisso de novo.
       renderiza mais `<HeroPhotoCollage>`, mas o componente continua no
       código (`hero-photo-collage.tsx`), fácil de reativar. Decisão
       final (com fotos ou só vídeo) ainda pendente do cliente.
+  - ✅ **Admin/Galeria: responsividade mobile corrigida** (2026-09-14):
+    cliente reportou botões quebrados no mobile. Causa: a grade de fotos
+    (`gallery-manager.tsx`) usava `grid-cols-2` já a partir do menor
+    breakpoint — em ~320-375px cada card sobrava só ~90px de largura
+    útil (depois do `p-6` da página + `p-4` do card), insuficiente pra
+    duas pílulas de botão lado a lado ("Principal"/"Galeria" e
+    "Salvar"/"Excluir"). Corrigido: grade vira `grid-cols-1` no mobile
+    (`sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`, um degrau acima do
+    que era antes); os dois pares de botão ganharam `flex-1` +
+    `flex-wrap` (dividem a linha em partes iguais, e se não couber,
+    quebram em vez de estourar); formulário de upload virou
+    `flex-col` no mobile (`sm:flex-row` a partir daí), com input de
+    arquivo e botão "Enviar foto" em `w-full` até `sm:`. Testado com
+    página de teste descartável renderizando `GalleryManager` com dados
+    mock (mesma técnica da Fase 6 > Hero mobile vídeo) em 320/375/768px
+    — sem overflow horizontal, botões proporcionais, sem erro de
+    console; página de teste removida depois.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
