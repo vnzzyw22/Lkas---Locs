@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { HeroPhotoDeck } from "./hero-photo-deck";
-import { HeroMobileVideoBackground } from "./hero-mobile-video";
+import { HeroVideoBackground } from "./hero-video-background";
 import type { BusinessSettings, GalleryPhoto } from "@/lib/supabase/types";
 
 interface HeroProps {
@@ -77,36 +77,22 @@ export function Hero({ business, photos }: HeroProps) {
           nunca pinta na tela (toca normalmente pela API, currentTime
           avança, mas fica preto). Sem z-index negativo nenhum, a ordem do
           DOM já garante o empilhamento correto: este bloco vem primeiro =
-          fica atrás do glow/decalque abaixo, que por sua vez fica atrás do
+          fica atrás do glow abaixo, que por sua vez fica atrás do
           conteúdo (`z-20`, mais abaixo). */}
       <div className="pointer-events-none absolute inset-0">
-        <HeroMobileVideoBackground />
+        <HeroVideoBackground />
       </div>
 
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {/* glow radial + decalque em marca d'água — inalterados, continuam
-            valendo (e sobrepondo o vídeo) tanto no mobile quanto no
-            desktop. */}
+        {/* glow radial — inalterado, continua valendo (e sobrepondo o
+            vídeo) tanto no mobile quanto no desktop. */}
         <div
           ref={bgRef}
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(60% 55% at 78% 18%, var(--color-brand-oxblood) 0%, transparent 65%), radial-gradient(50% 45% at 12% 85%, var(--color-brand-oxblood) 0%, transparent 60%)",
+              "radial-gradient(50% 45% at 12% 85%, var(--color-brand-oxblood) 0%, transparent 60%)",
           }}
-        />
-
-        {/* decalque real em marca d'água: textura de fundo, escala gigante,
-            sangrando pelas bordas — ver public/imagens/decal-locs-02.png e
-            scripts/process-decals.mjs (gerado a partir do jpg fornecido
-            pelo cliente, fundo tornado transparente de verdade) */}
-        <Image
-          src="/imagens/decal-locs-02.png"
-          alt=""
-          aria-hidden="true"
-          width={926}
-          height={751}
-          className="absolute -bottom-16 -left-24 w-[75vw] max-w-[880px] min-w-[420px] -rotate-6 opacity-[0.08]"
         />
       </div>
 

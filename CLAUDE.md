@@ -795,6 +795,17 @@ antes de mexer nisso de novo.
     barra de copyright. Confirmado em produção: FAQ visivelmente mais
     compacto no celular, desktop (1366px) inalterado, sem overflow em
     nenhuma largura testada (375px/1366px).
+  - ✅ **Mensagem de WhatsApp do agendamento reescrita (2026-09-09):** template
+    formal (`buildBookingMessage`, `src/lib/whatsapp.ts`) substituído por tom
+    "street/urbano" alinhado à identidade da marca, a pedido do cliente —
+    cabeçalho `📱 *Lkas Locs | Solicitação de Agendamento*`, negrito nativo do
+    WhatsApp (`*texto*`) nos campos Serviço/Data/Horário/Observação, emojis
+    como marcador visual de cada linha, fechamento "Tamo junto!👊🔥". Variáveis
+    já existentes reaproveitadas sem mudança de assinatura: `clientName`,
+    `serviceName`, `dateLabel`, `timeLabel` (ganhou sufixo `h`), `notes`
+    (linha `💬 *Observação:*` continua condicional — só aparece se o cliente
+    escreveu algo, mesmo comportamento de antes). `getWhatsappLink()` já
+    aplicava `encodeURIComponent` na mensagem inteira, nada mudou aí.
   - ✅ **Hero mobile: fundo em vídeo** (2026-09-10): `hero-photo-strip.tsx`
     removido; substituído por `hero-mobile-video.tsx` (vídeo de fundo,
     exclusivo mobile — `/videos/lkas-hero-mobile.mp4`, cliente forneceu)
@@ -833,6 +844,147 @@ antes de mexer nisso de novo.
       renderiza mais `<HeroPhotoCollage>`, mas o componente continua no
       código (`hero-photo-collage.tsx`), fácil de reativar. Decisão
       final (com fotos ou só vídeo) ainda pendente do cliente.
+  - ✅ **Hero: remove decalque da esquerda + vídeo de fundo também no
+    desktop (2026-09-13):** dois pedidos do cliente na mesma sessão.
+    - `decal-locs-02.png` (marca d'água gigante no canto inferior esquerdo,
+      atrás do wordmark) removido de `hero.tsx` — mantido só o
+      `decal-locs-01.png` (tranças ao lado das fotos, à direita), que não
+      foi mencionado.
+    - Cliente lembrava do vídeo de fundo já existir no mobile (bullet
+      acima, 2026-09-10) e pediu o mesmo vídeo no notebook. Na hora, um
+      `git log`/leitura de código deu a entender que não existia vídeo
+      nenhum — na verdade o checkout local desta sessão só estava
+      desatualizado (não tinha esse commit ainda). Só percebido ao tentar
+      dar `git push` e o remoto rejeitar — **lição: rodar `git fetch`
+      logo no início da sessão, não só confiar no `git log` local,
+      principalmente quando o cliente descreve um estado que não bate com
+      o que o código mostra.**
+    - Cheguei a implementar um `<video>` de fundo próprio reaproveitando
+      `video-marca-lkas.mp4` (o vídeo antigo da Fase 6, removido do
+      `brand-outro.tsx`) antes de descobrir o trabalho já existente — essa
+      implementação foi **descartada** no merge. Versão final: generalizado
+      o componente do mobile (`hero-mobile-video.tsx` →
+      `hero-video-background.tsx`, `HeroMobileVideoBackground` →
+      `HeroVideoBackground`) removendo a checagem `matchMedia` de largura —
+      mesmo vídeo (`/videos/lkas-hero-mobile.mp4`), mesma inicialização
+      reforçada de `play()`/`muted` e hack de GPU (`translateZ(0)`) do
+      bullet acima, agora tocando em qualquer largura de tela. Overlay
+      `bg-brand-ink/60` mantido como já validado (pixel-testado) ali —
+      não reinventado.
+    - `next.config.ts`: cheguei a adicionar de volta um rewrite defensivo
+      pro `video-marca-lkas.mp4` (não usado em lugar nenhum do Hero) —
+      revertido junto no merge, por não ter mais relação com nada.
+    - Testado localmente (Playwright avulso, não o MCP) em 1366px e
+      390px: vídeo visível e tocando nos dois, texto legível, sem erros
+      de console.
+  - ✅ **Limpeza de dados de teste + SEO básico (2026-09-13):** primeiros
+    passos rumo a comercializar de verdade. Cliente ainda não fechou
+    acordo com o dono do negócio — por isso só o que é 100% código (não
+    depende do acordo) foi feito agora; domínio próprio, Google Meu
+    Negócio e o texto final da política de privacidade/termos ficam pra
+    depois do acordo fechado.
+    - **Dados de teste removidos do banco real:** 12 clientes de teste
+      (`eter`, os "Vinicius" variados usados pra teste do próprio
+      desenvolvedor, `vini`, `teste 02`, `Teste 01`, `Teste 04/09`,
+      `Teste QA Playwright`) e os 12 agendamentos vinculados a eles,
+      excluídos via o próprio painel admin (Playwright dirigindo o
+      navegador, autenticado como admin) depois de mapear cada um com
+      cuidado (nome do cliente confirmado abrindo o agendamento, não só
+      contando quantidade). **Lição registrada:** contar "N clientes, N
+      agendamentos" e assumir correspondência 1-para-1 por posição foi
+      um erro — um cliente (`eter`) ficou de fora do mapeamento inicial
+      porque o agendamento dele estava numa semana que não tinha sido
+      conferida ainda, e só apareceu quando a exclusão do cliente falhou
+      com erro de FK. Mapeamento correto exige abrir cada agendamento e
+      ler o nome do cliente de verdade.
+    - **Botão "Excluir" agendamento, novo no painel** (Agenda →
+      selecionar horário → "Excluir", ao lado de Confirmar/Cancelar):
+      `deleteAppointment` em `src/app/admin/(painel)/agenda/actions.ts`.
+      Antes só existia "Cancelar" (muda status, não apaga a linha) — sem
+      isso não dava pra limpar de vez um agendamento de teste, só
+      cancelar e deixar no histórico pra sempre. Mensagem de erro ao
+      excluir cliente com agendamento vinculado
+      (`src/app/admin/(painel)/clientes/actions.ts`) atualizada pra
+      indicar esse caminho.
+    - ⚠️ **Achado sobre automação:** o classificador de "auto mode" do
+      Claude Code bloqueou tentativas de rodar a exclusão em massa via
+      script (Playwright) mesmo com autorização explícita do cliente no
+      chat — categorias "Irreversible Deletion"/"Cloud Storage Mass
+      Delete". É configurável via `autoMode.allow` no `settings.json`,
+      mas decidido não mexer nisso (risco de afrouxar mais do que o
+      necessário sem confirmar a sintaxe certa) — a exclusão em massa
+      feita por mim foi abandonada; o cliente excluiu manualmente pelo
+      painel a partir da lista que eu mapeei.
+    - **SEO básico implementado** (só código, sem depender do acordo):
+      - `src/lib/site-url.ts`: URL do site derivada do ambiente
+        (`NEXT_PUBLIC_SITE_URL` > `VERCEL_URL` > fallback local) — mesmo
+        espírito de não fixar nada no código do hostname do Supabase em
+        `next.config.ts`, importante pro modelo de reuso.
+      - `src/app/sitemap.ts` e `src/app/robots.ts` (convenções do App
+        Router) — só as rotas públicas (`/`, `/agendar`); `/admin`
+        explicitamente bloqueado no `robots.txt`.
+      - `src/app/layout.tsx`: `metadata` estático virou
+        `generateMetadata()` buscando `business_settings` (nome,
+        endereço) em vez de fixar "Lkas Locs" — Open Graph + Twitter
+        Card adicionados.
+      - `src/app/opengraph-image.tsx`: imagem de prévia de
+        compartilhamento gerada em código (`next/og`/`ImageResponse`),
+        cacheada no build, sem depender de arquivo estático nem do
+        banco. **Achado real:** `WebkitTextStroke` (o efeito de contorno
+        vazado usado no wordmark da Hero) não é suportado pelo Satori
+        (motor por trás do `ImageResponse`) — o texto "LOCS" ficava
+        completamente invisível (`color: transparent` + stroke ignorado
+        = nada renderizado). Corrigido trocando por texto sólido nessa
+        imagem específica; não afeta o wordmark real do site (que usa
+        CSS de navegador de verdade, `WebkitTextStroke` funciona normal
+        lá).
+      - `src/lib/business-hours.ts`: nova `toSchemaOpeningHours()`
+        converte o `business_hours` jsonb pro formato schema.org
+        (`OpeningHoursSpecification`), reaproveitada em `page.tsx` pro
+        JSON-LD (`HairSalon`: nome, endereço, telefone, horário) — ajuda
+        o Google a entender que é um negócio local.
+      - Testado via `curl` no servidor local: `/sitemap.xml`,
+        `/robots.txt`, meta tags OG/Twitter e o JSON-LD todos corretos e
+        puxando dado real de `business_settings`, não fixo.
+  - ✅ **3 ajustes pontuais + investigação de LCP (2026-09-13/14):**
+    - **Hero:** removido o glow vermelho do canto superior direito
+      (`radial-gradient(... at 78% 18% ...)`), mantido só o do canto
+      inferior esquerdo — pedido direto do cliente, sem outra mudança.
+    - ⚠️ **Bug real, 2ª tentativa até acertar:** nome de serviço de uma
+      palavra só ("Manutenção") no card de abertura de Serviços
+      estourava a largura no mobile e ficava cortado pelo
+      `overflow-hidden` (`text-4xl` fixo, sem espaço pra quebrar
+      linha). 1ª tentativa (`break-words`, parte a palavra ao meio —
+      "MANUTENÇ"/"ÃO") foi **rejeitada pelo cliente** ("não quero que
+      quebre"). Corrigido de vez em `services-section.tsx`: `isSingleWord`
+      (nome sem espaço) usa tamanho fluido `text-[8vw]` +
+      `whitespace-nowrap` só nesse caso, com o padding do card reduzido
+      no mobile (`p-8`→`p-6`) — nome de várias palavras continua
+      quebrando normal no espaço, sem tratamento especial. Testado em
+      320/375/390/430/768/1366px, cabe em uma linha em todos.
+    - **Investigação de performance (Lighthouse, LCP 4.2s):** cliente
+      trouxe um prompt bem técnico próprio sobre otimizar o vídeo de
+      fundo sem perder qualidade visual. Discussão feita **sem
+      executar nada** primeiro (pedido explícito do cliente) — cobrimos
+      `poster`, `preload`, reencode e a troca "imagem estática vira
+      vídeo depois". Decisão do cliente: só aceitar mudança que não
+      altere nada visualmente, com plano de reverter fácil se não
+      gostar.
+    - **Vídeo da Hero comprimido:** `lkas-hero-mobile.mp4` reencodado
+      com `ffmpeg` (instalado localmente via `ffmpeg-static`, sem
+      instalação no sistema) — libx264 CRF 24, preset slow, **áudio
+      removido** (o vídeo é sempre `muted`, a faixa de áudio nunca
+      tocava, puro peso morto) — 2,65MB → 1,10MB (-58%). Comparação de
+      frame a frame no mesmo timestamp confirmou qualidade visual
+      idêntica antes de substituir o arquivo real. Nenhum componente
+      tocado, só o arquivo de mídia (reversível com um simples `git
+      checkout` do arquivo, já que é rastreado no git).
+    - ⚠️ **Lição de diagnóstico:** cliente rodou o Lighthouse de novo
+      contra o `localhost` (modo dev do Next, sem nenhuma otimização —
+      número não é confiável) achando que já tinha medido produção;
+      nada disso tinha sido publicado ainda. Reforçar sempre: medir
+      performance de verdade só contra o build de produção, nunca
+      `next dev`.
   - ✅ **Admin/Galeria: responsividade mobile corrigida** (2026-09-14):
     cliente reportou botões quebrados no mobile. Causa: a grade de fotos
     (`gallery-manager.tsx`) usava `grid-cols-2` já a partir do menor

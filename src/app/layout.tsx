@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope, Montserrat, Sora, Unbounded } from "next/font/google";
+import { getBusinessSettings } from "@/lib/supabase/queries";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const unbounded = Unbounded({
@@ -39,10 +41,36 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
-export const metadata: Metadata = {
-  title: "Lkas Locs",
-  description: "Locs, tranças, twists, cuidados capilares e barbearia — Maringá, PR.",
-};
+// generateMetadata (não um objeto estático) pra puxar o nome/endereço reais
+// de business_settings — nada de marca fixa no código, mesmo princípio já
+// seguido no resto do site (importante pro modelo de reuso por cliente).
+export async function generateMetadata(): Promise<Metadata> {
+  const business = await getBusinessSettings();
+  const name = business?.name ?? "Lkas Locs";
+  const description = business?.address
+    ? `Locs, tranças, twists, cuidados capilares e barbearia — ${business.address}.`
+    : "Locs, tranças, twists, cuidados capilares e barbearia — Maringá, PR.";
+  const siteUrl = getSiteUrl();
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: name,
+    description,
+    openGraph: {
+      title: name,
+      description,
+      url: siteUrl,
+      siteName: name,
+      locale: "pt_BR",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: name,
+      description,
+    },
+  };
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

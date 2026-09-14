@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 
-const MOBILE_QUERY = "(max-width: 639px)";
 const REDUCE_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
 // useSyncExternalStore em vez de useState+useEffect: é o jeito idiomático
@@ -25,37 +24,26 @@ function useMediaQuery(query: string) {
   );
 }
 
-// Vídeo de fundo exclusivo do Hero MOBILE — o Hero desktop nunca renderiza
-// este elemento (ver hero.tsx, que só monta este componente dentro do
-// wrapper de background já existente, atrás do glow radial/decalque). A
-// checagem de largura acontece em JS (matchMedia), não só via classe
-// `sm:hidden`: um <video> presente no DOM mas escondido por CSS ainda pode
-// disparar download no desktop dependendo do navegador/preload — só
-// existir no DOM abaixo do breakpoint garante que o arquivo (~4.4MB) nunca
-// é buscado em telas maiores. `prefers-reduced-motion` corta o vídeo por
+// Vídeo de fundo da Hero — mobile e desktop (nasceu só mobile, ver
+// CLAUDE.md > Fase 6, generalizado depois a pedido do cliente pra usar o
+// mesmo vídeo no notebook). `prefers-reduced-motion` corta o vídeo por
 // completo: o fundo escuro (`bg-brand-ink`) + glow oxblood já existentes na
 // Hero (ver hero.tsx) já servem como experiência estática adequada, sem
 // precisar de um segundo fallback.
-export function HeroMobileVideoBackground() {
-  const isMobile = useMediaQuery(MOBILE_QUERY);
+export function HeroVideoBackground() {
   const reduceMotion = useMediaQuery(REDUCE_MOTION_QUERY);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // O <video> só existe no DOM depois da hidratação (isMobile começa em
-  // `false` no servidor, ver useMediaQuery acima) — ele nunca faz parte do
-  // HTML já interpretado pelo navegador, é inserido pelo React. Nesse
-  // cenário o atributo `autoPlay` sozinho é frágil: o React pode chamar
-  // play() antes do elemento processar o <source>/iniciar a seleção de
-  // mídia, e a prop `muted` do React nem sempre mantém a propriedade
-  // `.muted` real sincronizada no momento exato do play() — que é
-  // justamente o que a política de autoplay do Chrome verifica. Por isso
-  // a inicialização é reforçada aqui: muted setado explicitamente antes de
-  // qualquer play(), e o play() só é chamado quando o vídeo já tem dado
-  // suficiente (`readyState >= 3`) ou, se ainda não tiver, assim que os
-  // eventos `loadedmetadata`/`canplay` disparam.
+  // O atributo `autoPlay` sozinho é frágil aqui: a política de autoplay do
+  // Chrome verifica o estado real de `.muted` no exato momento do play(), e
+  // a prop `muted` do React nem sempre está sincronizada a tempo. Por isso
+  // a inicialização é reforçada: muted setado explicitamente antes de
+  // qualquer play(), chamado assim que o vídeo já tem dado suficiente
+  // (`readyState >= 3`) ou, se ainda não tiver, quando `loadedmetadata`/
+  // `canplay` dispararem.
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || reduceMotion) return;
 
     video.muted = true;
 
@@ -81,12 +69,12 @@ export function HeroMobileVideoBackground() {
       video.removeEventListener("loadedmetadata", tryPlay);
       video.removeEventListener("canplay", tryPlay);
     };
-  }, [isMobile, reduceMotion]);
+  }, [reduceMotion]);
 
-  if (!isMobile || reduceMotion) return null;
+  if (reduceMotion) return null;
 
   return (
-    <div className="absolute inset-0 sm:hidden">
+    <div className="absolute inset-0">
       <video
         ref={videoRef}
         src="/videos/lkas-hero-mobile.mp4"

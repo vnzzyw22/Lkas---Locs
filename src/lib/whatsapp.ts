@@ -24,14 +24,18 @@ export function buildBookingMessage({
   notes,
 }: BookingMessageParams) {
   const lines = [
-    `Olá! Meu nome é ${clientName} e acabei de solicitar um agendamento pelo site.`,
-    `Serviço: ${serviceName}`,
-    `Data: ${dateLabel}`,
-    `Horário: ${timeLabel}`,
+    "📱 *Lkas Locs | Solicitação de Agendamento*",
+    "",
+    `Salve! Meu nome é ${clientName} e acabei de mandar um pedido de agendamento pelo site. Dá uma ligada nos detalhes:`,
+    "",
+    `⚡ *Serviço:* ${serviceName}`,
+    `📅 *Data:* ${dateLabel}`,
+    `⏰ *Horário:* ${timeLabel}h`,
   ];
 
-  if (notes) lines.push(`Observação: ${notes}`);
-  lines.push("Aguardo a confirmação, obrigado(a)!");
+  if (notes) lines.push(`💬 *Observação:* ${notes}`);
+
+  lines.push("", "No aguardo do retorno para fechar esse progresso. Tamo junto!👊🔥");
 
   return lines.join("\n");
 }

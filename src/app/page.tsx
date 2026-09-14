@@ -6,6 +6,8 @@ import { GallerySection } from "@/components/site/gallery-section";
 import { Hero } from "@/components/site/hero";
 import { Navbar } from "@/components/site/navbar";
 import { ServicesSection } from "@/components/site/services-section";
+import { toSchemaOpeningHours } from "@/lib/business-hours";
+import { getSiteUrl } from "@/lib/site-url";
 import {
   getActiveServices,
   getBusinessSettings,
@@ -21,8 +23,34 @@ export default async function Home() {
     getPublicGalleryPhotos(),
   ]);
 
+  // Dados estruturados (schema.org HairSalon) — ajuda o Google a entender
+  // que é um negócio local (endereço, telefone, horário), melhora a chance
+  // de aparecer em busca/mapa local. Só monta os campos que a gente
+  // realmente tem; nada inventado.
+  const jsonLd = business
+    ? {
+        "@context": "https://schema.org",
+        "@type": "HairSalon",
+        name: business.name,
+        url: getSiteUrl(),
+        ...(business.address && { address: business.address }),
+        ...(business.whatsapp && { telephone: business.whatsapp }),
+        ...(Object.keys(business.business_hours ?? {}).length > 0 && {
+          openingHoursSpecification: toSchemaOpeningHours(
+            business.business_hours,
+          ),
+        }),
+      }
+    : null;
+
   return (
     <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
       <Navbar />
       {/* Sanduíche: Hero escura (abertura) -> Serviços/Galeria claras
           (conteúdo funcional) -> Sobre escura (transição, ecoa a Hero) ->
