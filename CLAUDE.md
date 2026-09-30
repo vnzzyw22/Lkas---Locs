@@ -1002,6 +1002,72 @@ antes de mexer nisso de novo.
     mock (mesma técnica da Fase 6 > Hero mobile vídeo) em 320/375/768px
     — sem overflow horizontal, botões proporcionais, sem erro de
     console; página de teste removida depois.
+- **Múltiplos profissionais + duração pelo tamanho do cabelo** (2026-09-26,
+  branch `feat/multi-profissional-duracao`). Sem pagamento nesta etapa (fora
+  de escopo por decisão do cliente).
+  - **Banco** (`supabase/migrations/20260926120000_profissionais_duracao_cabelo.sql`,
+    rollback manual em `supabase/rollbacks/`): tabelas `professionals`
+    (nome, foto, especialidades, ativo, ordem, `working_hours` jsonb no mesmo
+    formato de `business_hours` — `null` = segue o estúdio; preenchido =
+    interseção com o estúdio), `professional_services` (quem faz o quê) e
+    `service_hair_durations` (serviço + tamanho → minutos; serviço **sem**
+    linhas não pergunta tamanho e usa `services.duration_minutes`).
+    `appointments` ganhou `professional_id` (NOT NULL) e `hair_length`;
+    `blocked_slots` ganhou `professional_id` (`null` = estúdio inteiro).
+    Conflito virou por agenda: `EXCLUDE` com `professional_id with =` +
+    intervalo (agora **precisa** de `btree_gist`, ao contrário do que a nota
+    da Fase 1 dizia pro caso de 1 profissional). `busy_slots` expõe
+    `professional_id` (coluna no fim, código antigo continua lendo).
+  - **Equipe inicial** (pedido do cliente em 2026-09-30): exatamente
+    **Lucas, Crespo e Vênus**, nessa ordem (ids fixos `…a001`/`…a002`/`…a003`),
+    todos vinculados a todos os serviços — quem faz o quê se ajusta depois
+    em Painel → Profissionais.
+  - **Compatibilidade:** Lucas é o profissional padrão: recebe todos os
+    agendamentos existentes; bloqueios antigos viram "estúdio inteiro". Um
+    trigger `appointments_default_professional` preenche o profissional
+    quando o insert não manda (código antigo publicado) — por isso a
+    migration pode ir pro banco **antes** do deploy do código novo. O
+    contrário **não**: o código novo lê as tabelas novas e quebra
+    `/agendar` e a home sem a migration.
+  - **Duração:** nenhuma regra por tamanho foi semeada (valores da spec eram
+    exemplo). O Lucas liga por serviço em Serviços → Editar → "Duração varia
+    pelo tamanho do cabelo" (4 tamanhos obrigatórios). Candidatos óbvios:
+    Retwist, Manutenção, Starter Locs, Twists, Tranças, Barrel — não
+    Barbeiro/Terapeuta Capilar/Loctian.
+  - **Agendamento público:** serviço → tamanho (só se o serviço tiver regra)
+    → profissional ("Sem preferência" + quem realiza o serviço; some com 1
+    só) → data → horário → dados → resumo (serviço, profissional, tamanho,
+    duração, data, "14:00–16:30"). Disponibilidade calculada por
+    profissional considerando o intervalo inteiro
+    (`computeSlotsByProfessional` em `src/lib/scheduling.ts`); sem horário
+    com o escolhido, oferece "Tem horário com: X →". No envio revalida no
+    servidor; em "Sem preferência" tenta cada profissional livre em ordem e
+    pula pro próximo se a constraint (23P01) barrar uma corrida.
+  - **Painel:** nova página Profissionais (editor de horário extraído de
+    Configurações pra `components/admin/hours-editor.tsx`); Serviços ganhou
+    durações por tamanho + "Quem realiza"; Agenda ganhou filtro
+    Todos | nome… (`?prof=`), nome do profissional e término em cada item,
+    tamanho/duração no detalhe, e bloqueio por agenda (estúdio ou 1
+    profissional). Folga pontual = bloqueio; pausa recorrente (almoço) não
+    tem configuração própria — hoje, bloqueio.
+  - **Testes (sem tocar produção):** migration validada em PGlite (PG18, 21
+    checks: backfill, conflitos, RLS, rollback atômico + reaplicação) e num
+    Postgres 17 local com PostgREST + gateway fake do Supabase
+    (`C:\Users\Public\lkas-e2e-2`, `reset-db.ps1` recria do zero com dados
+    sintéticos). E2E Playwright contra `next build` de produção: 29/29 (os 8
+    cenários da spec + painel + mobile 320/375/390/430 + regressões), zero
+    erro de console. Achados corrigidos na hora: resumo do agendamento
+    espremia o horário no mobile (vira empilhado abaixo de `sm:`); agenda
+    "Todos" cortava o término com nome longo (nome em linha própria);
+    rótulo "Muito longo (min)" desalinhava os campos de duração.
+  - ⚠️ **PostgreSQL 18 mudou o código de `ON DELETE RESTRICT`** de `23503`
+    pra `23001`. O Supabase de hoje ainda responde `23503`; `deleteProfessional`
+    trata os dois. `deleteService`/`deleteClient` ainda só tratam `23503` —
+    revisar se o projeto Supabase for atualizado pro PG18.
+  - ⚠️ **Pendente:** aplicar a migration no Supabase real (CLI não estava
+    logado nesta máquina — `npx supabase login` é interativo e precisa ser
+    rodado pelo cliente num terminal de verdade), depois publicar o código e
+    fazer um smoke test em produção.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
@@ -1017,4 +1083,7 @@ Twists. Preço e duração devem ser 100% editáveis pelo painel — nunca hardc
   observação). Sem integração de API complexa por enquanto; deixar a arquitetura
   preparada para automação futura.
 - Status de agendamento: Pendente, Confirmado, Cancelado.
-- Apenas 1 profissional por enquanto — sem gerenciamento multi-profissional.
+- Vários profissionais, cada um com agenda independente (desde 2026-09-26) —
+  ainda 1 negócio por deployment (template clonado), sem `business_id`.
+- Duração pode depender do tamanho do cabelo, configurável por serviço no
+  painel — nunca hardcoded.

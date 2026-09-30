@@ -8,45 +8,16 @@ import {
   labelClass,
   sectionTitleClass,
 } from "@/components/admin/theme";
-import { DAY_LABELS, DAY_ORDER } from "@/lib/business-hours";
-import type { BusinessHours, BusinessSettings } from "@/lib/supabase/types";
+import {
+  HoursEditor,
+  toBusinessHours,
+  toHoursState,
+  type HoursState,
+} from "@/components/admin/hours-editor";
+import type { BusinessSettings } from "@/lib/supabase/types";
 
 interface SettingsFormProps {
   business: BusinessSettings;
-}
-
-interface DayState {
-  closed: boolean;
-  open: string;
-  close: string;
-}
-
-type HoursState = Record<(typeof DAY_ORDER)[number], DayState>;
-
-function toHoursState(hours: BusinessHours): HoursState {
-  const state = {} as HoursState;
-  for (const day of DAY_ORDER) {
-    const entry = hours[day];
-    if (entry && "closed" in entry && entry.closed) {
-      state[day] = { closed: true, open: "09:00", close: "18:00" };
-    } else if (entry && "open" in entry) {
-      state[day] = { closed: false, open: entry.open, close: entry.close };
-    } else {
-      state[day] = { closed: true, open: "09:00", close: "18:00" };
-    }
-  }
-  return state;
-}
-
-function toBusinessHours(state: HoursState): BusinessHours {
-  const hours: BusinessHours = {};
-  for (const day of DAY_ORDER) {
-    const dayState = state[day];
-    hours[day] = dayState.closed
-      ? { closed: true }
-      : { open: dayState.open, close: dayState.close };
-  }
-  return hours;
 }
 
 export function SettingsForm({ business }: SettingsFormProps) {
@@ -62,8 +33,8 @@ export function SettingsForm({ business }: SettingsFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  function updateDay(day: (typeof DAY_ORDER)[number], patch: Partial<DayState>) {
-    setHours((prev) => ({ ...prev, [day]: { ...prev[day], ...patch } }));
+  function handleHoursChange(next: HoursState) {
+    setHours(next);
     setSaved(false);
   }
 
@@ -162,45 +133,7 @@ export function SettingsForm({ business }: SettingsFormProps) {
       <div className="flex flex-col gap-3">
         <span className={sectionTitleClass}>Horário de funcionamento</span>
 
-        {DAY_ORDER.map((day) => (
-          <div
-            key={day}
-            className="flex flex-wrap items-center gap-3 text-sm text-white/70"
-          >
-            <span className="w-20 shrink-0 text-white/50">
-              {DAY_LABELS[day]}
-            </span>
-
-            <label className="flex items-center gap-1.5">
-              <input
-                type="checkbox"
-                checked={!hours[day].closed}
-                onChange={(e) =>
-                  updateDay(day, { closed: !e.target.checked })
-                }
-              />
-              Aberto
-            </label>
-
-            {!hours[day].closed && (
-              <>
-                <input
-                  type="time"
-                  value={hours[day].open}
-                  onChange={(e) => updateDay(day, { open: e.target.value })}
-                  className={fieldClass}
-                />
-                <span className="text-white/30">até</span>
-                <input
-                  type="time"
-                  value={hours[day].close}
-                  onChange={(e) => updateDay(day, { close: e.target.value })}
-                  className={fieldClass}
-                />
-              </>
-            )}
-          </div>
-        ))}
+        <HoursEditor hours={hours} onChange={handleHoursChange} />
       </div>
 
       {error && <p className="text-sm text-red-400">{error}</p>}

@@ -11,6 +11,8 @@ export function getWhatsappLink(whatsapp: string | null, message: string) {
 interface BookingMessageParams {
   clientName: string;
   serviceName: string;
+  professionalName?: string;
+  hairLengthLabel?: string;
   dateLabel: string;
   timeLabel: string;
   notes?: string;
@@ -19,6 +21,8 @@ interface BookingMessageParams {
 export function buildBookingMessage({
   clientName,
   serviceName,
+  professionalName,
+  hairLengthLabel,
   dateLabel,
   timeLabel,
   notes,
@@ -29,9 +33,12 @@ export function buildBookingMessage({
     `Salve! Meu nome é ${clientName} e acabei de mandar um pedido de agendamento pelo site. Dá uma ligada nos detalhes:`,
     "",
     `⚡ *Serviço:* ${serviceName}`,
-    `📅 *Data:* ${dateLabel}`,
-    `⏰ *Horário:* ${timeLabel}h`,
   ];
+
+  if (professionalName) lines.push(`✂️ *Profissional:* ${professionalName}`);
+  if (hairLengthLabel) lines.push(`📏 *Tamanho:* ${hairLengthLabel}`);
+
+  lines.push(`📅 *Data:* ${dateLabel}`, `⏰ *Horário:* ${timeLabel}`);
 
   if (notes) lines.push(`💬 *Observação:* ${notes}`);
 

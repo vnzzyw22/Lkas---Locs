@@ -34,6 +34,8 @@ interface CreateBlockedSlotInput {
   startsAtISO: string;
   endsAtISO: string;
   reason: string;
+  // null = bloqueia o estúdio inteiro (todos os profissionais).
+  professionalId: string | null;
 }
 
 export async function deleteAppointment(id: string): Promise<ActionResult> {
@@ -61,13 +63,14 @@ export async function createBlockedSlot(
     starts_at: input.startsAtISO,
     ends_at: input.endsAtISO,
     reason: input.reason.trim() || null,
+    professional_id: input.professionalId,
   });
 
   if (error) {
     if (error.code === "23P01") {
       return {
         ok: false,
-        error: "Esse horário conflita com um agendamento ou bloqueio existente.",
+        error: "Já existe um bloqueio nesse horário pra essa agenda.",
       };
     }
     console.error("Erro ao criar blocked_slot:", error.message);

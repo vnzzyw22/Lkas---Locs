@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { DAY_ORDER } from "@/lib/business-hours";
+import { isValidBusinessHours } from "@/lib/business-hours";
 import type { BusinessHours } from "@/lib/supabase/types";
 
 const BUSINESS_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
@@ -16,21 +16,6 @@ interface UpdateBusinessSettingsInput {
 }
 
 type UpdateResult = { ok: true } | { ok: false; error: string };
-
-function isValidBusinessHours(hours: BusinessHours) {
-  return DAY_ORDER.every((day) => {
-    const entry = hours[day];
-    if (!entry) return false;
-    if ("closed" in entry) return entry.closed === true;
-    return (
-      "open" in entry &&
-      "close" in entry &&
-      /^\d{2}:\d{2}$/.test(entry.open) &&
-      /^\d{2}:\d{2}$/.test(entry.close) &&
-      entry.open < entry.close
-    );
-  });
-}
 
 export async function updateBusinessSettings(
   input: UpdateBusinessSettingsInput,

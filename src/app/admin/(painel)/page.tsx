@@ -60,6 +60,9 @@ function AppointmentRow({ appointment }: { appointment: AdminAppointment }) {
       <span className="text-white/50">
         {appointment.service?.name ?? "Serviço removido"}
       </span>
+      {appointment.professional && (
+        <span className="text-white/40">com {appointment.professional.name}</span>
+      )}
       <span className={`ml-auto ${badgeClass(STATUS_TONE[appointment.status])}`}>
         {STATUS_LABEL[appointment.status]}
       </span>

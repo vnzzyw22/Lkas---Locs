@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { formatDuration, formatPrice } from "@/lib/format";
+import { formatPrice, formatServiceDuration } from "@/lib/format";
 import type { Service } from "@/lib/supabase/types";
 
 interface ServiceSelectProps {
@@ -14,7 +14,7 @@ interface ServiceSelectProps {
 }
 
 function serviceLabel(service: Service) {
-  return `${service.name} — ${formatPrice(service.price)} (${formatDuration(service.duration_minutes)})`;
+  return `${service.name} — ${formatPrice(service.price)} (${formatServiceDuration(service)})`;
 }
 
 function ChevronIcon({ open }: { open: boolean }) {

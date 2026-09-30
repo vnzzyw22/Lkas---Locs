@@ -17,12 +17,14 @@ import {
   labelClass,
   linkDangerClass,
 } from "@/components/admin/theme";
-import { formatPrice } from "@/lib/format";
+import { formatDuration, formatPrice } from "@/lib/format";
+import { HAIR_LENGTH_LABELS } from "@/lib/hair-length";
 import { getWhatsappLink } from "@/lib/whatsapp";
 import { timeToStartsAtISO } from "@/lib/scheduling";
 import type {
   AdminAppointment,
   AdminBlockedSlot,
+  AdminProfessional,
   AppointmentStatus,
 } from "@/lib/supabase/types";
 
@@ -31,6 +33,9 @@ interface AgendaWeekViewProps {
   isCurrentWeek: boolean;
   appointments: AdminAppointment[];
   blockedSlots: AdminBlockedSlot[];
+  professionals: AdminProfessional[];
+  // null = todos os profissionais.
+  professionalFilter: string | null;
 }
 
 type Selection =
@@ -72,6 +77,12 @@ function addDaysISO(dateISO: string, days: number) {
   return date.toISOString().slice(0, 10);
 }
 
+function durationMinutes(startsAt: string, endsAt: string) {
+  return Math.round(
+    (new Date(endsAt).getTime() - new Date(startsAt).getTime()) / 60_000,
+  );
+}
+
 function dayNumberLabel(dateISO: string) {
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
@@ -84,6 +95,8 @@ export function AgendaWeekView({
   isCurrentWeek,
   appointments,
   blockedSlots,
+  professionals,
+  professionalFilter,
 }: AgendaWeekViewProps) {
   const router = useRouter();
   const [selection, setSelection] = useState<Selection>(null);
@@ -94,31 +107,58 @@ export function AgendaWeekView({
   const [blockStart, setBlockStart] = useState("12:00");
   const [blockEnd, setBlockEnd] = useState("13:00");
   const [blockReason, setBlockReason] = useState("");
+  const [blockProfessional, setBlockProfessional] = useState<string>("");
   const [blockSubmitting, setBlockSubmitting] = useState(false);
   const [blockError, setBlockError] = useState<string | null>(null);
+
+  // Com um profissional só, a agenda se comporta como antes (sem filtro e sem
+  // nome em cada horário).
+  const multipleProfessionals = professionals.length > 1;
+
+  const visibleAppointments = professionalFilter
+    ? appointments.filter((a) => a.professional?.id === professionalFilter)
+    : appointments;
+  // Bloqueio do estúdio inteiro aparece em qualquer filtro.
+  const visibleBlocks = professionalFilter
+    ? blockedSlots.filter(
+        (b) => !b.professional || b.professional.id === professionalFilter,
+      )
+    : blockedSlots;
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const dateISO = addDaysISO(weekStartISO, i);
     return {
       dateISO,
       isToday: dateISO === dateKeySP(new Date().toISOString()),
-      appointments: appointments
+      appointments: visibleAppointments
         .filter((a) => dateKeySP(a.starts_at) === dateISO)
         .sort((a, b) => a.starts_at.localeCompare(b.starts_at)),
-      blocks: blockedSlots
+      blocks: visibleBlocks
         .filter((b) => dateKeySP(b.starts_at) === dateISO)
         .sort((a, b) => a.starts_at.localeCompare(b.starts_at)),
     };
   });
 
+  function agendaHref(anchorISO: string, professionalId: string | null) {
+    return professionalId
+      ? `/admin/agenda?data=${anchorISO}&prof=${professionalId}`
+      : `/admin/agenda?data=${anchorISO}`;
+  }
+
   function goToWeek(anchorISO: string) {
     setSelection(null);
-    router.push(`/admin/agenda?data=${anchorISO}`);
+    router.push(agendaHref(anchorISO, professionalFilter));
+  }
+
+  function filterByProfessional(professionalId: string | null) {
+    setSelection(null);
+    router.push(agendaHref(weekStartISO, professionalId));
   }
 
   function openBlockForm(dateISO: string) {
     setSelection(null);
     setBlockDate(dateISO);
+    setBlockProfessional(professionalFilter ?? "");
     setBlockError(null);
   }
 
@@ -169,6 +209,7 @@ export function AgendaWeekView({
       startsAtISO: timeToStartsAtISO(blockDate, blockStart),
       endsAtISO: timeToStartsAtISO(blockDate, blockEnd),
       reason: blockReason,
+      professionalId: blockProfessional || null,
     });
 
     setBlockSubmitting(false);
@@ -218,6 +259,31 @@ export function AgendaWeekView({
         </button>
       </div>
 
+      {multipleProfessionals && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            aria-pressed={professionalFilter === null}
+            onClick={() => filterByProfessional(null)}
+            className={filterButtonClass(professionalFilter === null)}
+          >
+            Todos
+          </button>
+          {professionals.map((professional) => (
+            <button
+              key={professional.id}
+              type="button"
+              aria-pressed={professionalFilter === professional.id}
+              onClick={() => filterByProfessional(professional.id)}
+              className={filterButtonClass(professionalFilter === professional.id)}
+            >
+              {professional.name}
+              {!professional.active && " (inativo)"}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-7 lg:gap-2">
         {days.map((day) => (
           <div
@@ -259,11 +325,27 @@ export function AgendaWeekView({
                     } ${appointment.status === "cancelled" ? "opacity-40 line-through" : ""}`}
                   >
                     <span
-                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[appointment.status]}`}
+                      className={`h-1.5 w-1.5 shrink-0 self-start mt-1.5 rounded-full ${STATUS_DOT[appointment.status]}`}
                     />
-                    <span className="truncate">
-                      {timeLabel(appointment.starts_at)}{" "}
-                      {appointment.service?.name ?? "Serviço removido"}
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate">
+                        {timeLabel(appointment.starts_at)}{" "}
+                        {appointment.service?.name ?? "Serviço removido"}
+                      </span>
+                      {/* Nome em linha própria: nas colunas estreitas da
+                          semana, "Nome · até HH:MM" cortava o término. */}
+                      {multipleProfessionals && !professionalFilter && (
+                        <span
+                          className={`truncate text-[11px] ${isSelected ? "text-white/80" : "text-white/60"}`}
+                        >
+                          {appointment.professional?.name ?? "Sem profissional"}
+                        </span>
+                      )}
+                      <span
+                        className={`truncate text-[11px] ${isSelected ? "text-white/80" : "text-white/45"}`}
+                      >
+                        até {timeLabel(appointment.ends_at)}
+                      </span>
                     </span>
                   </button>
                 );
@@ -285,6 +367,11 @@ export function AgendaWeekView({
                     }`}
                   >
                     {timeLabel(block.starts_at)} Bloqueado
+                    {multipleProfessionals && (
+                      <span className="block truncate text-[11px]">
+                        {block.professional?.name ?? "Estúdio inteiro"}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -316,9 +403,30 @@ export function AgendaWeekView({
                   <> — {formatPrice(selection.data.service.price)}</>
                 )}
               </p>
+              {selection.data.professional && (
+                <p className="mt-1 text-sm text-white/60">
+                  Profissional: {selection.data.professional.name}
+                </p>
+              )}
+              {selection.data.hair_length && (
+                <p className="mt-1 text-sm text-white/60">
+                  Tamanho do cabelo:{" "}
+                  {HAIR_LENGTH_LABELS[selection.data.hair_length]}
+                </p>
+              )}
               <p className="mt-1 text-sm text-white/60">
-                {timeLabel(selection.data.starts_at)}–
-                {timeLabel(selection.data.ends_at)}
+                {new Intl.DateTimeFormat("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  timeZone: "America/Sao_Paulo",
+                }).format(new Date(selection.data.starts_at))}{" "}
+                · {timeLabel(selection.data.starts_at)}–
+                {timeLabel(selection.data.ends_at)} (
+                {formatDuration(
+                  durationMinutes(selection.data.starts_at, selection.data.ends_at),
+                )}
+                )
               </p>
               {selection.data.notes && (
                 <p className="mt-1 text-sm text-white/40">
@@ -392,6 +500,9 @@ export function AgendaWeekView({
             Bloqueio {timeLabel(selection.data.starts_at)}–
             {timeLabel(selection.data.ends_at)}
           </p>
+          <p className="text-sm text-white/60">
+            {selection.data.professional?.name ?? "Estúdio inteiro"}
+          </p>
           {selection.data.reason && (
             <p className="text-sm text-white/60">{selection.data.reason}</p>
           )}
@@ -446,6 +557,23 @@ export function AgendaWeekView({
               className={fieldClass}
             />
           </div>
+          {multipleProfessionals && (
+            <div className="flex flex-col gap-1.5">
+              <label className={labelClass}>Agenda</label>
+              <select
+                value={blockProfessional}
+                onChange={(e) => setBlockProfessional(e.target.value)}
+                className={fieldClass}
+              >
+                <option value="">Estúdio inteiro</option>
+                {professionals.map((professional) => (
+                  <option key={professional.id} value={professional.id}>
+                    {professional.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex min-w-40 flex-1 flex-col gap-1.5">
             <label className={labelClass}>Motivo (opcional)</label>
             <input

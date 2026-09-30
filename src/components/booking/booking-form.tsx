@@ -1,22 +1,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createAppointment, getAvailableSlots } from "@/app/agendar/actions";
+import { createAppointment, getAvailability } from "@/app/agendar/actions";
 import { todayISO } from "@/lib/date";
 import { formatDuration, formatPrice } from "@/lib/format";
+import { HAIR_LENGTH_LABELS, HAIR_LENGTHS, type HairLength } from "@/lib/hair-length";
+import {
+  resolveServiceDuration,
+  timeRangeLabel,
+  timeToStartsAtISO,
+} from "@/lib/scheduling";
 import { ServiceSelect } from "./service-select";
-import type { Service } from "@/lib/supabase/types";
+import type { Professional, Service } from "@/lib/supabase/types";
 
 interface BookingFormProps {
   services: Service[];
+  professionals: Professional[];
   preselectedServiceId?: string;
 }
 
+// "any" = sem preferência de profissional (o sistema escolhe o primeiro livre).
+const ANY_PROFESSIONAL = "any";
+
 interface SlotPickerProps {
   serviceId: string;
+  hairLength: HairLength | null;
   dateISO: string;
+  professionalChoice: string;
+  professionals: Professional[];
   selectedTime: string | null;
   onSelect: (time: string) => void;
+  onSwitchProfessional: (id: string) => void;
 }
 
 // Estilo compartilhado dos campos "Serviço"/"Data" (2026-09-03, redesign
@@ -32,38 +46,94 @@ const fieldClass =
 const labelClass =
   "font-label text-xs font-bold tracking-widest text-white uppercase";
 
+// Mesmo visual dos blocos de horário — usado também nas opções de tamanho e
+// de profissional, pra etapa nova parecer parte do mesmo formulário.
+function choiceClass(selected: boolean) {
+  return `rounded-lg border px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+    selected
+      ? "border-brand-red bg-brand-red text-white"
+      : "border-transparent bg-white/[0.06] text-brand-smoke hover:border-brand-red hover:text-white hover:shadow-[0_0_12px_rgba(200,16,46,0.35)]"
+  }`;
+}
+
 function SlotPicker({
   serviceId,
+  hairLength,
   dateISO,
+  professionalChoice,
+  professionals,
   selectedTime,
   onSelect,
+  onSwitchProfessional,
 }: SlotPickerProps) {
-  const [slots, setSlots] = useState<string[] | null>(null);
+  const [slotsByProfessional, setSlotsByProfessional] = useState<Record<
+    string,
+    string[]
+  > | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    getAvailableSlots(serviceId, dateISO).then((result) => {
+    getAvailability(serviceId, hairLength, dateISO).then((result) => {
       if (cancelled) return;
       setLoading(false);
       if ("error" in result) setError(result.error);
-      else setSlots(result.slots);
+      else setSlotsByProfessional(result.slotsByProfessional);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [serviceId, dateISO]);
+  }, [serviceId, hairLength, dateISO]);
 
   if (loading) return <p className="text-sm text-brand-smoke">Carregando horários...</p>;
   if (error) return <p className="text-sm text-red-400">{error}</p>;
-  if (!slots || slots.length === 0) {
+  if (!slotsByProfessional) return null;
+
+  // Sem preferência: qualquer horário em que pelo menos um profissional
+  // esteja livre durante todo o atendimento.
+  const slots =
+    professionalChoice === ANY_PROFESSIONAL
+      ? [...new Set(Object.values(slotsByProfessional).flat())].sort()
+      : (slotsByProfessional[professionalChoice] ?? []);
+
+  if (slots.length === 0) {
+    const alternatives =
+      professionalChoice === ANY_PROFESSIONAL
+        ? []
+        : professionals.filter(
+            (p) =>
+              p.id !== professionalChoice &&
+              (slotsByProfessional[p.id]?.length ?? 0) > 0,
+          );
+
     return (
-      <p className="text-sm text-brand-smoke">
-        Nenhum horário disponível nessa data. Tente outro dia.
-      </p>
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-brand-smoke">
+          Nenhum horário disponível nessa data
+          {professionalChoice !== ANY_PROFESSIONAL &&
+            ` com ${professionals.find((p) => p.id === professionalChoice)?.name ?? "esse profissional"}`}
+          .{" "}
+          {alternatives.length === 0 && "Tente outro dia."}
+        </p>
+        {alternatives.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-brand-smoke">Tem horário com:</span>
+            {alternatives.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => onSwitchProfessional(p.id)}
+                className={choiceClass(false)}
+              >
+                {p.name} →
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -75,11 +145,7 @@ function SlotPicker({
           type="button"
           aria-pressed={selectedTime === slot}
           onClick={() => onSelect(slot)}
-          className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-            selectedTime === slot
-              ? "border-brand-red bg-brand-red text-white"
-              : "border-transparent bg-white/[0.06] text-brand-smoke hover:border-brand-red hover:text-white hover:shadow-[0_0_12px_rgba(200,16,46,0.35)]"
-          }`}
+          className={choiceClass(selectedTime === slot)}
         >
           {slot}
         </button>
@@ -88,8 +154,39 @@ function SlotPicker({
   );
 }
 
+interface SummaryRow {
+  label: string;
+  value: string;
+}
+
+// Resumo do que está sendo reservado — antes de enviar e na tela de sucesso.
+// No celular cada item empilha (rótulo em cima do valor): lado a lado, a
+// coluna de rótulos ("Duração estimada") espremia os valores e quebrava o
+// horário ao meio ("09:00–" / "12:00").
+function BookingSummary({ rows }: { rows: SummaryRow[] }) {
+  return (
+    <dl className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-5 text-left text-sm sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:gap-y-2">
+      {rows.map((row) => (
+        <div key={row.label} className="flex flex-col gap-0.5 sm:contents">
+          <dt className="font-label text-xs font-bold tracking-widest text-brand-smoke uppercase">
+            {row.label}
+          </dt>
+          <dd className="text-white">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function dateLabelPT(dateISO: string) {
+  return new Date(`${dateISO}T00:00:00-03:00`).toLocaleDateString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+  });
+}
+
 export function BookingForm({
   services,
+  professionals,
   preselectedServiceId,
 }: BookingFormProps) {
   const [serviceId, setServiceId] = useState(
@@ -97,6 +194,8 @@ export function BookingForm({
       ? preselectedServiceId
       : "",
   );
+  const [hairLength, setHairLength] = useState<HairLength | null>(null);
+  const [professionalChoice, setProfessionalChoice] = useState(ANY_PROFESSIONAL);
   const [dateISO, setDateISO] = useState("");
   const [time, setTime] = useState<string | null>(null);
 
@@ -106,18 +205,93 @@ export function BookingForm({
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ whatsappLink: string | null } | null>(
-    null,
-  );
+  const [success, setSuccess] = useState<{
+    whatsappLink: string | null;
+    summary: SummaryRow[];
+  } | null>(null);
+
+  const selectedService = services.find((s) => s.id === serviceId);
+  const asksHairLength = (selectedService?.hair_durations.length ?? 0) > 0;
+  const hairOptions = HAIR_LENGTHS.flatMap((length) => {
+    const rule = selectedService?.hair_durations.find(
+      (d) => d.hair_length === length,
+    );
+    return rule ? [{ length, minutes: rule.duration_minutes }] : [];
+  });
+
+  const eligibleProfessionals = selectedService
+    ? professionals.filter((p) => p.service_ids.includes(selectedService.id))
+    : [];
+  // Com um profissional só não há o que escolher: ele é a opção.
+  const effectiveProfessional =
+    eligibleProfessionals.length === 1
+      ? eligibleProfessionals[0].id
+      : professionalChoice;
+
+  const durationMinutes = selectedService
+    ? resolveServiceDuration(selectedService, hairLength)
+    : null;
+  const readyForDate =
+    !!selectedService &&
+    durationMinutes !== null &&
+    eligibleProfessionals.length > 0;
 
   function handleServiceChange(id: string) {
     setServiceId(id);
+    setHairLength(null);
+    setTime(null);
+    // Mantém a escolha de profissional só se ele também realiza o novo serviço.
+    if (
+      professionalChoice !== ANY_PROFESSIONAL &&
+      !professionals
+        .find((p) => p.id === professionalChoice)
+        ?.service_ids.includes(id)
+    ) {
+      setProfessionalChoice(ANY_PROFESSIONAL);
+    }
+  }
+
+  function handleHairLengthChange(length: HairLength) {
+    setHairLength(length);
+    setTime(null);
+  }
+
+  function handleProfessionalChange(id: string) {
+    setProfessionalChoice(id);
     setTime(null);
   }
 
   function handleDateChange(value: string) {
     setDateISO(value);
     setTime(null);
+  }
+
+  function professionalLabel() {
+    if (effectiveProfessional === ANY_PROFESSIONAL) {
+      return "Primeiro disponível";
+    }
+    return (
+      professionals.find((p) => p.id === effectiveProfessional)?.name ?? ""
+    );
+  }
+
+  function buildSummary(professionalName: string, timeRange: string) {
+    if (!selectedService || durationMinutes === null || !dateISO) return [];
+
+    const rows: SummaryRow[] = [
+      { label: "Serviço", value: selectedService.name },
+      { label: "Profissional", value: professionalName },
+    ];
+    if (asksHairLength && hairLength) {
+      rows.push({ label: "Tamanho", value: HAIR_LENGTH_LABELS[hairLength] });
+    }
+    rows.push(
+      { label: "Duração estimada", value: formatDuration(durationMinutes) },
+      { label: "Data", value: dateLabelPT(dateISO) },
+      { label: "Horário", value: timeRange },
+      { label: "Valor", value: formatPrice(selectedService.price) },
+    );
+    return rows;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -129,6 +303,8 @@ export function BookingForm({
 
     const result = await createAppointment({
       serviceId,
+      hairLength: asksHairLength ? hairLength : null,
+      professionalId: effectiveProfessional,
       dateISO,
       time,
       name,
@@ -139,7 +315,10 @@ export function BookingForm({
     setSubmitting(false);
 
     if (result.ok) {
-      setSuccess({ whatsappLink: result.whatsappLink });
+      setSuccess({
+        whatsappLink: result.whatsappLink,
+        summary: buildSummary(result.professionalName, result.timeRange),
+      });
     } else {
       setSubmitError(result.error);
     }
@@ -155,6 +334,9 @@ export function BookingForm({
           Falta pouco: confirme o pedido pelo WhatsApp para garantir seu
           horário. Ele fica pendente até o retorno da Lkas Locs.
         </p>
+        <div className="w-full">
+          <BookingSummary rows={success.summary} />
+        </div>
         {success.whatsappLink && (
           <a
             href={success.whatsappLink}
@@ -168,8 +350,6 @@ export function BookingForm({
       </div>
     );
   }
-
-  const selectedService = services.find((s) => s.id === serviceId);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -187,35 +367,107 @@ export function BookingForm({
         />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="data" className={labelClass}>
-          Data
-        </label>
-        <input
-          id="data"
-          type="date"
-          required
-          min={todayISO()}
-          value={dateISO}
-          onChange={(e) => handleDateChange(e.target.value)}
-          className={fieldClass}
-        />
-      </div>
+      {asksHairLength && (
+        <fieldset className="flex flex-col gap-2">
+          <legend className={`${labelClass} mb-2`}>
+            Tamanho dos locs/cabelo
+          </legend>
+          <p className="-mt-1 text-xs text-brand-smoke">
+            O tempo do atendimento depende do tamanho.
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {hairOptions.map((option) => (
+              <button
+                key={option.length}
+                type="button"
+                aria-pressed={hairLength === option.length}
+                onClick={() => handleHairLengthChange(option.length)}
+                className={`flex flex-col items-center gap-0.5 ${choiceClass(hairLength === option.length)}`}
+              >
+                <span>{HAIR_LENGTH_LABELS[option.length]}</span>
+                <span className="text-xs opacity-70">
+                  {formatDuration(option.minutes)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
-      {serviceId && dateISO && (
+      {selectedService && eligibleProfessionals.length === 0 && (
+        <p className="text-sm text-brand-smoke">
+          No momento nenhum profissional está atendendo esse serviço pelo
+          site. Fale com a gente pelo WhatsApp.
+        </p>
+      )}
+
+      {selectedService &&
+        durationMinutes !== null &&
+        eligibleProfessionals.length > 1 && (
+          <fieldset className="flex flex-col gap-2">
+            <legend className={`${labelClass} mb-2`}>Profissional</legend>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <button
+                type="button"
+                aria-pressed={professionalChoice === ANY_PROFESSIONAL}
+                onClick={() => handleProfessionalChange(ANY_PROFESSIONAL)}
+                className={choiceClass(professionalChoice === ANY_PROFESSIONAL)}
+              >
+                Sem preferência
+              </button>
+              {eligibleProfessionals.map((professional) => (
+                <button
+                  key={professional.id}
+                  type="button"
+                  aria-pressed={professionalChoice === professional.id}
+                  onClick={() => handleProfessionalChange(professional.id)}
+                  className={choiceClass(professionalChoice === professional.id)}
+                >
+                  {professional.name}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
+
+      {readyForDate && (
         <div className="flex flex-col gap-2">
-          <span className={labelClass}>Horário</span>
-          <SlotPicker
-            key={`${serviceId}-${dateISO}`}
-            serviceId={serviceId}
-            dateISO={dateISO}
-            selectedTime={time}
-            onSelect={setTime}
+          <label htmlFor="data" className={labelClass}>
+            Data
+          </label>
+          <input
+            id="data"
+            type="date"
+            required
+            min={todayISO()}
+            value={dateISO}
+            onChange={(e) => handleDateChange(e.target.value)}
+            className={fieldClass}
           />
         </div>
       )}
 
-      {time && (
+      {readyForDate && dateISO && (
+        <div className="flex flex-col gap-2">
+          <span className={labelClass}>Horário</span>
+          <p className="-mt-1 text-xs text-brand-smoke">
+            Duração estimada: {formatDuration(durationMinutes)}
+          </p>
+          <SlotPicker
+            key={`${serviceId}-${hairLength}-${dateISO}`}
+            serviceId={serviceId}
+            hairLength={asksHairLength ? hairLength : null}
+            dateISO={dateISO}
+            professionalChoice={effectiveProfessional}
+            professionals={eligibleProfessionals}
+            selectedTime={time}
+            onSelect={setTime}
+            onSwitchProfessional={handleProfessionalChange}
+          />
+        </div>
+      )}
+
+      {time && durationMinutes !== null && (
         <>
           <div className="flex flex-col gap-2">
             <label htmlFor="nome" className={labelClass}>
@@ -259,13 +511,15 @@ export function BookingForm({
             />
           </div>
 
-          {selectedService && (
-            <p className="text-sm text-brand-smoke">
-              Resumo: {selectedService.name} —{" "}
-              {formatPrice(selectedService.price)} (
-              {formatDuration(selectedService.duration_minutes)})
-            </p>
-          )}
+          <div className="flex flex-col gap-2">
+            <span className={labelClass}>Resumo</span>
+            <BookingSummary
+              rows={buildSummary(
+                professionalLabel(),
+                timeRangeLabel(timeToStartsAtISO(dateISO, time), durationMinutes),
+              )}
+            />
+          </div>
 
           {submitError && <p className="text-sm text-red-400">{submitError}</p>}
 

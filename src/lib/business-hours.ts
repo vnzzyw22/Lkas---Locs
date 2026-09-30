@@ -12,6 +12,23 @@ export const DAY_LABELS: Record<(typeof DAY_ORDER)[number], string> = {
   sun: "Domingo",
 };
 
+// Todos os 7 dias presentes, cada um fechado ou com abertura antes do
+// fechamento. Usado no horário do estúdio e no horário próprio de profissional.
+export function isValidBusinessHours(hours: BusinessHours) {
+  return DAY_ORDER.every((day) => {
+    const entry = hours[day];
+    if (!entry) return false;
+    if ("closed" in entry) return entry.closed === true;
+    return (
+      "open" in entry &&
+      "close" in entry &&
+      /^\d{2}:\d{2}$/.test(entry.open) &&
+      /^\d{2}:\d{2}$/.test(entry.close) &&
+      entry.open < entry.close
+    );
+  });
+}
+
 const SCHEMA_DAY: Record<(typeof DAY_ORDER)[number], string> = {
   mon: "Monday",
   tue: "Tuesday",

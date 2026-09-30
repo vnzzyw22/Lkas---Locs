@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { formatDuration, formatPrice } from "@/lib/format";
+import { formatPrice, formatServiceDuration } from "@/lib/format";
 import { Reveal } from "./reveal";
 import type { Service } from "@/lib/supabase/types";
 
@@ -173,7 +173,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                           isLead ? "text-brand-cream/70" : "text-neutral-500"
                         }`}
                       >
-                        {formatDuration(service.duration_minutes)}
+                        {formatServiceDuration(service)}
                       </span>
                     </div>
 

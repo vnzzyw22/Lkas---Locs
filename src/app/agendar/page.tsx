@@ -1,9 +1,15 @@
 import { BookingForm } from "@/components/booking/booking-form";
-import { getActiveServices } from "@/lib/supabase/queries";
+import {
+  getActiveProfessionals,
+  getActiveServices,
+} from "@/lib/supabase/queries";
 
 export default async function AgendarPage(props: PageProps<"/agendar">) {
   const searchParams = await props.searchParams;
-  const services = await getActiveServices();
+  const [services, professionals] = await Promise.all([
+    getActiveServices(),
+    getActiveProfessionals(),
+  ]);
 
   const preselectedParam = searchParams.servico;
   const preselectedServiceId = Array.isArray(preselectedParam)
@@ -21,13 +27,14 @@ export default async function AgendarPage(props: PageProps<"/agendar">) {
             Agendar <span className="text-brand-red">horário</span>
           </h1>
           <p className="mt-2 text-sm text-brand-smoke">
-            Escolha o serviço, a data e o horário. Você confirma o pedido pelo
+            Escolha o serviço, o profissional, a data e o horário. Você confirma o pedido pelo
             WhatsApp e aguarda a confirmação.
           </p>
         </div>
 
         <BookingForm
           services={services}
+          professionals={professionals}
           preselectedServiceId={preselectedServiceId}
         />
       </main>

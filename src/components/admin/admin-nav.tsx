@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/admin/agenda", label: "Agenda" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/servicos", label: "Serviços" },
+  { href: "/admin/profissionais", label: "Profissionais" },
   { href: "/admin/galeria", label: "Galeria" },
   { href: "/admin/financeiro", label: "Financeiro" },
   { href: "/admin/configuracoes", label: "Configurações" },

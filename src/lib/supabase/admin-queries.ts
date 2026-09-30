@@ -4,6 +4,7 @@ import type {
   AdminBlockedSlot,
   AdminClient,
   AdminGalleryPhoto,
+  AdminProfessional,
   AdminService,
   AdminTransaction,
 } from "./types";
@@ -16,7 +17,7 @@ export async function getAllServices(): Promise<AdminService[]> {
   const { data, error } = await supabase
     .from("services")
     .select(
-      "id, name, description, price, duration_minutes, image_url, active, display_order",
+      "id, name, description, price, duration_minutes, image_url, active, display_order, hair_durations:service_hair_durations(hair_length, duration_minutes)",
     )
     .order("display_order", { ascending: true });
 
@@ -36,7 +37,7 @@ export async function getAppointmentsForRange(
   const { data, error } = await supabase
     .from("appointments")
     .select(
-      "id, starts_at, ends_at, status, notes, client:clients(id, name, whatsapp), service:services(id, name, price)",
+      "id, starts_at, ends_at, status, notes, hair_length, client:clients(id, name, whatsapp), service:services(id, name, price), professional:professionals(id, name)",
     )
     .lt("starts_at", toISO)
     .gt("ends_at", fromISO)
@@ -57,7 +58,7 @@ export async function getBlockedSlotsForRange(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("blocked_slots")
-    .select("id, starts_at, ends_at, reason")
+    .select("id, starts_at, ends_at, reason, professional:professionals(id, name)")
     .lt("starts_at", toISO)
     .gt("ends_at", fromISO)
     .order("starts_at", { ascending: true });
@@ -67,7 +68,7 @@ export async function getBlockedSlotsForRange(
     return [];
   }
 
-  return data;
+  return data as unknown as AdminBlockedSlot[];
 }
 
 export async function getAllClients(): Promise<AdminClient[]> {
@@ -118,4 +119,27 @@ export async function getTransactionsForRange(
   }
 
   return data;
+}
+
+export async function getAllProfessionals(): Promise<AdminProfessional[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("professionals")
+    .select(
+      "id, name, bio, photo_url, working_hours, active, display_order, professional_services(service_id)",
+    )
+    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao buscar professionals (admin):", error.message);
+    return [];
+  }
+
+  return data.map(({ professional_services, ...professional }) => ({
+    ...professional,
+    service_ids: (professional_services as { service_id: string }[]).map(
+      (link) => link.service_id,
+    ),
+  }));
 }

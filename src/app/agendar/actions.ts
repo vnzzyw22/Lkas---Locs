@@ -2,18 +2,24 @@
 
 import { createClient } from "@/lib/supabase/server";
 import {
+  getActiveProfessionals,
   getActiveServiceById,
   getBusinessSettings,
   getBusySlots,
 } from "@/lib/supabase/queries";
 import {
-  computeAvailableSlots,
+  computeSlotsByProfessional,
+  resolveServiceDuration,
+  timeRangeLabel,
   timeToStartsAtISO,
-  weekdayKeyFor,
 } from "@/lib/scheduling";
+import { HAIR_LENGTH_LABELS, isHairLength, type HairLength } from "@/lib/hair-length";
 import { buildBookingMessage, getWhatsappLink } from "@/lib/whatsapp";
 
 const MAX_DAYS_AHEAD = 60;
+
+// Valor do seletor de profissional quando o cliente não tem preferência.
+const ANY_PROFESSIONAL = "any";
 
 function isValidFutureDate(dateISO: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return false;
@@ -27,44 +33,85 @@ function isValidFutureDate(dateISO: string) {
   return date >= min && date <= max;
 }
 
-export async function getAvailableSlots(
+// Carrega tudo que o cálculo de disponibilidade precisa e calcula os horários
+// livres de cada profissional que realiza o serviço. Usado tanto pra mostrar
+// os horários quanto pra revalidar o horário escolhido na hora de gravar
+// (o cliente pode ter ficado com a tela aberta enquanto outra pessoa agendou).
+async function loadAvailability(
   serviceId: string,
+  hairLength: HairLength | null,
   dateISO: string,
-): Promise<{ slots: string[] } | { error: string }> {
-  if (!isValidFutureDate(dateISO)) {
-    return { error: "Escolha uma data válida (hoje até 60 dias à frente)." };
-  }
-
-  const [service, business] = await Promise.all([
+) {
+  const [service, business, professionals] = await Promise.all([
     getActiveServiceById(serviceId),
     getBusinessSettings(),
+    getActiveProfessionals(),
   ]);
 
-  if (!service) return { error: "Serviço não encontrado." };
-  if (!business) return { error: "Não foi possível carregar os horários." };
+  if (!service) return { ok: false, error: "Serviço não encontrado." } as const;
+  if (!business) {
+    return { ok: false, error: "Não foi possível carregar os horários." } as const;
+  }
 
-  const dayHours = business.business_hours[weekdayKeyFor(dateISO)];
-  const openTime = dayHours && "open" in dayHours ? dayHours.open : null;
-  const closeTime = dayHours && "close" in dayHours ? dayHours.close : null;
+  const durationMinutes = resolveServiceDuration(service, hairLength);
+  if (durationMinutes === null) {
+    return { ok: false, error: "Informe o tamanho do cabelo." } as const;
+  }
 
-  const dayStartISO = `${dateISO}T00:00:00-03:00`;
-  const dayEndISO = `${dateISO}T23:59:59-03:00`;
-  const busyRanges = await getBusySlots(dayStartISO, dayEndISO);
+  const eligible = professionals.filter((p) => p.service_ids.includes(service.id));
 
-  const slots = computeAvailableSlots({
+  const busyRanges = await getBusySlots(
+    `${dateISO}T00:00:00-03:00`,
+    `${dateISO}T23:59:59-03:00`,
+  );
+
+  const slotsByProfessional = computeSlotsByProfessional({
     dateISO,
-    openTime,
-    closeTime,
-    durationMinutes: service.duration_minutes,
+    businessHours: business.business_hours,
+    professionals: eligible,
+    durationMinutes,
     busyRanges,
     nowEpochMs: Date.now(),
   });
 
-  return { slots };
+  return {
+    ok: true,
+    service,
+    business,
+    eligible,
+    durationMinutes,
+    slotsByProfessional,
+  } as const;
+}
+
+export async function getAvailability(
+  serviceId: string,
+  hairLength: string | null,
+  dateISO: string,
+): Promise<
+  | { durationMinutes: number; slotsByProfessional: Record<string, string[]> }
+  | { error: string }
+> {
+  if (!isValidFutureDate(dateISO)) {
+    return { error: "Escolha uma data válida (hoje até 60 dias à frente)." };
+  }
+  if (hairLength !== null && !isHairLength(hairLength)) {
+    return { error: "Tamanho de cabelo inválido." };
+  }
+
+  const result = await loadAvailability(serviceId, hairLength, dateISO);
+  if (!result.ok) return { error: result.error };
+
+  return {
+    durationMinutes: result.durationMinutes,
+    slotsByProfessional: result.slotsByProfessional,
+  };
 }
 
 interface CreateAppointmentInput {
   serviceId: string;
+  hairLength: string | null;
+  professionalId: string; // id ou "any"
   dateISO: string;
   time: string;
   name: string;
@@ -73,7 +120,12 @@ interface CreateAppointmentInput {
 }
 
 type CreateAppointmentResult =
-  | { ok: true; whatsappLink: string | null }
+  | {
+      ok: true;
+      whatsappLink: string | null;
+      professionalName: string;
+      timeRange: string;
+    }
   | { ok: false; error: string };
 
 export async function createAppointment(
@@ -82,6 +134,7 @@ export async function createAppointment(
   const name = input.name.trim();
   const whatsapp = input.whatsapp.trim();
   const notes = input.notes?.trim() || undefined;
+  const hairLength = input.hairLength;
 
   if (!name) return { ok: false, error: "Informe seu nome." };
   if (whatsapp.replace(/\D/g, "").length < 10) {
@@ -93,18 +146,52 @@ export async function createAppointment(
   if (!/^\d{2}:\d{2}$/.test(input.time)) {
     return { ok: false, error: "Horário inválido." };
   }
+  if (hairLength !== null && !isHairLength(hairLength)) {
+    return { ok: false, error: "Tamanho de cabelo inválido." };
+  }
 
-  const service = await getActiveServiceById(input.serviceId);
-  if (!service) return { ok: false, error: "Serviço não encontrado." };
+  const availability = await loadAvailability(
+    input.serviceId,
+    hairLength,
+    input.dateISO,
+  );
+  if (!availability.ok) return { ok: false, error: availability.error };
+
+  const { service, business, eligible, durationMinutes, slotsByProfessional } =
+    availability;
+
+  // Serviço sem regra por tamanho não guarda tamanho (a pergunta nem aparece).
+  const storedHairLength = service.hair_durations.length > 0 ? hairLength : null;
+
+  // Candidatos na ordem de preferência: o escolhido, ou — em "qualquer
+  // profissional" — todos que realizam o serviço, na ordem do painel.
+  const candidates =
+    input.professionalId === ANY_PROFESSIONAL
+      ? eligible
+      : eligible.filter((p) => p.id === input.professionalId);
+
+  if (candidates.length === 0) {
+    return {
+      ok: false,
+      error: "Esse profissional não realiza o serviço escolhido.",
+    };
+  }
+
+  const free = candidates.filter((p) =>
+    slotsByProfessional[p.id]?.includes(input.time),
+  );
+
+  if (free.length === 0) {
+    return {
+      ok: false,
+      error: "Esse horário não está mais disponível. Escolha outro.",
+    };
+  }
 
   const startsAt = timeToStartsAtISO(input.dateISO, input.time);
   const endsAt = new Date(
-    new Date(startsAt).getTime() + service.duration_minutes * 60_000,
+    new Date(startsAt).getTime() + durationMinutes * 60_000,
   ).toISOString();
-
-  if (new Date(startsAt).getTime() < Date.now()) {
-    return { ok: false, error: "Esse horário já passou, escolha outro." };
-  }
 
   const supabase = await createClient();
 
@@ -122,44 +209,62 @@ export async function createAppointment(
     return { ok: false, error: "Não foi possível enviar o agendamento." };
   }
 
-  const { error: appointmentError } = await supabase
-    .from("appointments")
-    .insert({
-      client_id: clientId,
-      service_id: service.id,
-      starts_at: startsAt,
-      ends_at: endsAt,
-      status: "pending",
-      notes: notes ?? null,
-    });
+  // Tenta cada profissional livre em ordem: se dois clientes disputam o mesmo
+  // horário, a constraint do banco (23P01) barra o segundo e, em "qualquer
+  // profissional", ele cai no próximo livre em vez de receber erro.
+  let booked: (typeof free)[number] | null = null;
+  for (const professional of free) {
+    const { error: appointmentError } = await supabase
+      .from("appointments")
+      .insert({
+        client_id: clientId,
+        service_id: service.id,
+        professional_id: professional.id,
+        hair_length: storedHairLength,
+        starts_at: startsAt,
+        ends_at: endsAt,
+        status: "pending",
+        notes: notes ?? null,
+      });
 
-  if (appointmentError) {
-    if (appointmentError.code === "23P01") {
-      return {
-        ok: false,
-        error: "Esse horário acabou de ser reservado por outra pessoa. Escolha outro.",
-      };
+    if (!appointmentError) {
+      booked = professional;
+      break;
     }
-    console.error("Erro ao criar appointment:", appointmentError.message);
-    return { ok: false, error: "Não foi possível enviar o agendamento." };
+
+    if (appointmentError.code !== "23P01") {
+      console.error("Erro ao criar appointment:", appointmentError.message);
+      return { ok: false, error: "Não foi possível enviar o agendamento." };
+    }
   }
 
-  const business = await getBusinessSettings();
+  if (!booked) {
+    return {
+      ok: false,
+      error: "Esse horário acabou de ser reservado por outra pessoa. Escolha outro.",
+    };
+  }
+
   const dateLabel = new Date(`${input.dateISO}T00:00:00-03:00`).toLocaleDateString(
     "pt-BR",
     { timeZone: "America/Sao_Paulo" },
   );
+  const timeRange = timeRangeLabel(startsAt, durationMinutes);
 
   const whatsappLink = getWhatsappLink(
-    business?.whatsapp ?? null,
+    business.whatsapp,
     buildBookingMessage({
       clientName: name,
       serviceName: service.name,
+      professionalName: eligible.length > 1 ? booked.name : undefined,
+      hairLengthLabel: storedHairLength
+        ? HAIR_LENGTH_LABELS[storedHairLength]
+        : undefined,
       dateLabel,
-      timeLabel: input.time,
+      timeLabel: timeRange,
       notes,
     }),
   );
 
-  return { ok: true, whatsappLink };
+  return { ok: true, whatsappLink, professionalName: booked.name, timeRange };
 }

@@ -2,6 +2,7 @@ import { AgendaWeekView } from "@/components/admin/agenda-week-view";
 import { pageSubtitleClass, pageTitleClass } from "@/components/admin/theme";
 import { todayISO } from "@/lib/date";
 import {
+  getAllProfessionals,
   getAppointmentsForRange,
   getBlockedSlotsForRange,
 } from "@/lib/supabase/admin-queries";
@@ -26,6 +27,9 @@ export default async function AgendaPage(props: PageProps<"/admin/agenda">) {
   const dataParam = searchParams.data;
   const anchorISO =
     (Array.isArray(dataParam) ? dataParam[0] : dataParam) || todayISO();
+  const profParam = searchParams.prof;
+  const professionalFilter =
+    (Array.isArray(profParam) ? profParam[0] : profParam) || null;
 
   const weekStartISO = startOfWeekISO(anchorISO);
   const weekEndISO = addDaysISO(weekStartISO, 6);
@@ -34,9 +38,10 @@ export default async function AgendaPage(props: PageProps<"/admin/agenda">) {
   const rangeStartISO = `${weekStartISO}T00:00:00-03:00`;
   const rangeEndISO = `${weekEndISO}T23:59:59-03:00`;
 
-  const [appointments, blockedSlots] = await Promise.all([
+  const [appointments, blockedSlots, professionals] = await Promise.all([
     getAppointmentsForRange(rangeStartISO, rangeEndISO),
     getBlockedSlotsForRange(rangeStartISO, rangeEndISO),
+    getAllProfessionals(),
   ]);
 
   return (
@@ -51,6 +56,12 @@ export default async function AgendaPage(props: PageProps<"/admin/agenda">) {
         isCurrentWeek={isCurrentWeek}
         appointments={appointments}
         blockedSlots={blockedSlots}
+        professionals={professionals}
+        professionalFilter={
+          professionals.some((p) => p.id === professionalFilter)
+            ? professionalFilter
+            : null
+        }
       />
     </div>
   );
