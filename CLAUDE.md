@@ -1064,10 +1064,14 @@ antes de mexer nisso de novo.
     pra `23001`. O Supabase de hoje ainda responde `23503`; `deleteProfessional`
     trata os dois. `deleteService`/`deleteClient` ainda só tratam `23503` —
     revisar se o projeto Supabase for atualizado pro PG18.
-  - ⚠️ **Pendente:** aplicar a migration no Supabase real (CLI não estava
-    logado nesta máquina — `npx supabase login` é interativo e precisa ser
-    rodado pelo cliente num terminal de verdade), depois publicar o código e
-    fazer um smoke test em produção.
+  - ✅ **Migration aplicada em produção (2026-09-30)** pelo cliente, via SQL
+    Editor do Supabase (o CLI não tem login nesta máquina — `npx supabase
+    login` é interativo e falhou duas vezes). O SQL colado foi a migration
+    dentro de `begin/commit` + insert de `20260926120000` em
+    `supabase_migrations.schema_migrations`, então o histórico do CLI já está
+    consistente (um `db push` futuro não tenta reaplicar). Conferido pela API
+    antes do deploy: 3 profissionais × 9 serviços, agendamentos antigos no
+    Lucas, bloqueios antigos como estúdio inteiro.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
