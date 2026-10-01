@@ -1072,6 +1072,19 @@ antes de mexer nisso de novo.
     consistente (um `db push` futuro não tenta reaplicar). Conferido pela API
     antes do deploy: 3 profissionais × 9 serviços, agendamentos antigos no
     Lucas, bloqueios antigos como estúdio inteiro.
+  - ⚠️ **Deploy (2026-09-30), 2 achados:**
+    - O push pro `main` **não disparou deploy** na Vercel (nenhum
+      deployment criado, nem com erro; o último automático foi o de
+      14/09). A integração GitHub → Vercel parece desligada — conferir em
+      Vercel → lkas-locs → Settings → Git. Deploy feito pelo CLI
+      (`npx vercel deploy --prod --scope vnzzyw`, pasta vinculada com
+      `vercel link`, `.vercel/` já no `.gitignore`).
+    - O build **na Vercel** falhava só na Unbounded (`next/font/google
+      queries have exactly one entry`, Turbopack) — localmente passava,
+      então é a resposta do Google pro servidor de build. Corrigido
+      servindo a fonte do projeto (`src/app/fonts/unbounded-latin.woff2`
+      via `next/font/local`, mesmos pesos 500/700/900, mesmo arquivo que o
+      Google servia). Comparação pixel a pixel antes/depois: idêntico.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)

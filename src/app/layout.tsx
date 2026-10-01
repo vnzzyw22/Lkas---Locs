@@ -1,13 +1,23 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Manrope, Montserrat, Sora, Unbounded } from "next/font/google";
+import { JetBrains_Mono, Manrope, Montserrat, Sora } from "next/font/google";
+import localFont from "next/font/local";
 import { getBusinessSettings } from "@/lib/supabase/queries";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
-const unbounded = Unbounded({
+// Unbounded servida do próprio projeto (2026-09-30) em vez de next/font/google:
+// o build da Vercel passou a falhar só nela ("next/font/google queries have
+// exactly one entry" — o Turbopack não aceita o endereço que o Google devolve
+// pro servidor de build). É o mesmo arquivo que o Google servia (subset
+// latino, fonte variável — um arquivo pros 3 pesos), declarado nos mesmos
+// pesos de antes, então o visual não muda. Licença OFL.
+const unbounded = localFont({
   variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["500", "700", "900"],
+  src: [
+    { path: "./fonts/unbounded-latin.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/unbounded-latin.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/unbounded-latin.woff2", weight: "900", style: "normal" },
+  ],
 });
 
 // Segunda fonte de destaque (2026-09-03), a pedido do cliente — mesmo
