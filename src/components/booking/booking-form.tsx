@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createAppointment, getAvailability } from "@/app/agendar/actions";
 import { todayISO } from "@/lib/date";
@@ -17,6 +18,8 @@ interface BookingFormProps {
   services: Service[];
   professionals: Professional[];
   preselectedServiceId?: string;
+  // Sinal via Pix ligado nas Configurações (null = fluxo antigo, sem sinal).
+  deposit: { amount: number; holdMinutes: number } | null;
 }
 
 // "any" = sem preferência de profissional (o sistema escolhe o primeiro livre).
@@ -154,7 +157,7 @@ function SlotPicker({
   );
 }
 
-interface SummaryRow {
+export interface SummaryRow {
   label: string;
   value: string;
 }
@@ -163,7 +166,7 @@ interface SummaryRow {
 // No celular cada item empilha (rótulo em cima do valor): lado a lado, a
 // coluna de rótulos ("Duração estimada") espremia os valores e quebrava o
 // horário ao meio ("09:00–" / "12:00").
-function BookingSummary({ rows }: { rows: SummaryRow[] }) {
+export function BookingSummary({ rows }: { rows: SummaryRow[] }) {
   return (
     <dl className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-5 text-left text-sm sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:gap-y-2">
       {rows.map((row) => (
@@ -188,7 +191,9 @@ export function BookingForm({
   services,
   professionals,
   preselectedServiceId,
+  deposit,
 }: BookingFormProps) {
+  const router = useRouter();
   const [serviceId, setServiceId] = useState(
     preselectedServiceId && services.some((s) => s.id === preselectedServiceId)
       ? preselectedServiceId
@@ -311,6 +316,12 @@ export function BookingForm({
       whatsapp,
       notes,
     });
+
+    if (result.ok && result.paymentPath) {
+      // Mantém o botão travado até a navegação terminar (evita reenvio).
+      router.push(result.paymentPath);
+      return;
+    }
 
     setSubmitting(false);
 
@@ -521,6 +532,15 @@ export function BookingForm({
             />
           </div>
 
+          {deposit && (
+            <p className="rounded-lg border border-brand-red/40 bg-brand-red/[0.08] px-4 py-3 text-sm text-white">
+              Para confirmar o horário é preciso um sinal de{" "}
+              <strong className="font-bold">{formatPrice(deposit.amount)}</strong>{" "}
+              via Pix. No próximo passo, seu horário fica reservado por{" "}
+              {deposit.holdMinutes} minutos enquanto você paga.
+            </p>
+          )}
+
           {submitError && <p className="text-sm text-red-400">{submitError}</p>}
 
           <button
@@ -528,7 +548,11 @@ export function BookingForm({
             disabled={submitting}
             className="w-full rounded-full bg-brand-red px-6 py-4 text-sm font-bold tracking-widest text-white uppercase transition hover:opacity-90 disabled:opacity-50"
           >
-            {submitting ? "Enviando..." : "Agendar"}
+            {submitting
+              ? "Enviando..."
+              : deposit
+                ? "Reservar e pagar o sinal"
+                : "Agendar"}
           </button>
         </>
       )}

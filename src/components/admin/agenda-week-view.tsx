@@ -8,6 +8,7 @@ import {
   deleteBlockedSlot,
   updateAppointmentStatus,
 } from "@/app/admin/(painel)/agenda/actions";
+import { confirmPayment } from "@/app/admin/(painel)/pagamentos/actions";
 import {
   buttonPrimaryClass,
   buttonSecondaryClass,
@@ -17,6 +18,11 @@ import {
   labelClass,
   linkDangerClass,
 } from "@/components/admin/theme";
+import {
+  appointmentStatusInfo,
+  bookingCode,
+  needsPaymentReview,
+} from "@/lib/deposit";
 import { formatDuration, formatPrice } from "@/lib/format";
 import { HAIR_LENGTH_LABELS } from "@/lib/hair-length";
 import { getWhatsappLink } from "@/lib/whatsapp";
@@ -44,12 +50,6 @@ type Selection =
   | null;
 
 const WEEKDAY_LABELS = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
-
-const STATUS_LABEL: Record<AppointmentStatus, string> = {
-  pending: "Pendente",
-  confirmed: "Confirmado",
-  cancelled: "Cancelado",
-};
 
 const STATUS_DOT: Record<AppointmentStatus, string> = {
   pending: "bg-amber-400",
@@ -172,6 +172,24 @@ export function AgendaWeekView({
       router.refresh();
     } else {
       setActionError(result.error);
+    }
+  }
+
+  async function handleConfirmPayment(id: string) {
+    setStatusUpdating(true);
+    setActionError(null);
+    try {
+      const result = await confirmPayment(id);
+      if (result.ok) {
+        setSelection(null);
+        router.refresh();
+      } else {
+        setActionError(result.error);
+      }
+    } catch {
+      setActionError("Falha de conexão. Tente de novo.");
+    } finally {
+      setStatusUpdating(false);
     }
   }
 
@@ -433,9 +451,30 @@ export function AgendaWeekView({
                   {selection.data.notes}
                 </p>
               )}
+              {selection.data.payment_status !== "not_required" && (
+                <p className="mt-2 font-label text-xs text-white/60">
+                  Sinal:{" "}
+                  <strong className="text-sm text-white">
+                    {formatPrice(selection.data.deposit_amount ?? 0)}
+                  </strong>
+                  {selection.data.payment_confirmed_at &&
+                    ` · pago e conferido em ${new Intl.DateTimeFormat("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZone: "America/Sao_Paulo",
+                    }).format(new Date(selection.data.payment_confirmed_at))}${
+                      selection.data.payment_confirmed_by
+                        ? ` por ${selection.data.payment_confirmed_by}`
+                        : ""
+                    }`}
+                  {` · código ${bookingCode(selection.data.id)}`}
+                </p>
+              )}
             </div>
             <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/60">
-              {STATUS_LABEL[selection.data.status]}
+              {appointmentStatusInfo(selection.data).label}
             </span>
           </div>
 
@@ -455,14 +494,26 @@ export function AgendaWeekView({
                 WhatsApp
               </a>
             )}
-            {selection.data.status === "pending" && (
+            {selection.data.status === "pending" &&
+              selection.data.payment_status === "not_required" && (
+                <button
+                  type="button"
+                  disabled={statusUpdating}
+                  onClick={() => handleStatusChange(selection.data.id, "confirmed")}
+                  className={buttonPrimaryClass}
+                >
+                  Confirmar
+                </button>
+              )}
+            {/* Com sinal, o horário só confirma pela conferência do Pix. */}
+            {needsPaymentReview(selection.data) && (
               <button
                 type="button"
                 disabled={statusUpdating}
-                onClick={() => handleStatusChange(selection.data.id, "confirmed")}
+                onClick={() => handleConfirmPayment(selection.data.id)}
                 className={buttonPrimaryClass}
               >
-                Confirmar
+                Confirmar pagamento
               </button>
             )}
             {selection.data.status !== "cancelled" && (

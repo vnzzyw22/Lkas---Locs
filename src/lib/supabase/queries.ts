@@ -19,7 +19,9 @@ export async function getBusinessSettings(): Promise<BusinessSettings | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("business_settings")
-    .select("id, name, whatsapp, instagram, address, business_hours")
+    .select(
+      "id, name, whatsapp, instagram, address, business_hours, deposit_amount, pix_key, deposit_hold_minutes",
+    )
     .single();
 
   if (error) {

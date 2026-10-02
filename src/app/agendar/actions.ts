@@ -14,6 +14,8 @@ import {
   timeToStartsAtISO,
 } from "@/lib/scheduling";
 import { HAIR_LENGTH_LABELS, isHairLength, type HairLength } from "@/lib/hair-length";
+import { getDepositConfig } from "@/lib/deposit";
+import { releaseExpiredReservations } from "@/lib/supabase/reservations";
 import { buildBookingMessage, getWhatsappLink } from "@/lib/whatsapp";
 
 const MAX_DAYS_AHEAD = 60;
@@ -42,6 +44,9 @@ async function loadAvailability(
   hairLength: HairLength | null,
   dateISO: string,
 ) {
+  // Reserva de sinal vencida libera o horário antes de calcular a agenda.
+  await releaseExpiredReservations();
+
   const [service, business, professionals] = await Promise.all([
     getActiveServiceById(serviceId),
     getBusinessSettings(),
@@ -125,6 +130,9 @@ type CreateAppointmentResult =
       whatsappLink: string | null;
       professionalName: string;
       timeRange: string;
+      // Com sinal ligado, a próxima etapa é a tela de pagamento (null = fluxo
+      // antigo, confirmação direta pelo WhatsApp).
+      paymentPath: string | null;
     }
   | { ok: false; error: string };
 
@@ -200,6 +208,10 @@ export async function createAppointment(
   // de um INSERT — pedir o retorno faria o insert falhar. Por isso o id é
   // gerado aqui e usado direto, sem precisar ler a linha de volta.
   const clientId = crypto.randomUUID();
+  // Mesmo raciocínio: o id do agendamento nasce aqui pra levar o cliente à
+  // tela de pagamento sem ler a linha de volta.
+  const appointmentId = crypto.randomUUID();
+  const deposit = getDepositConfig(business);
   const { error: clientError } = await supabase
     .from("clients")
     .insert({ id: clientId, name, whatsapp });
@@ -217,6 +229,7 @@ export async function createAppointment(
     const { error: appointmentError } = await supabase
       .from("appointments")
       .insert({
+        id: appointmentId,
         client_id: clientId,
         service_id: service.id,
         professional_id: professional.id,
@@ -224,6 +237,9 @@ export async function createAppointment(
         starts_at: startsAt,
         ends_at: endsAt,
         status: "pending",
+        // O valor e o prazo da reserva são fixados pelo banco (trigger), a
+        // partir das configurações — não confiam no que o navegador manda.
+        payment_status: deposit ? "awaiting_payment" : "not_required",
         notes: notes ?? null,
       });
 
@@ -266,5 +282,11 @@ export async function createAppointment(
     }),
   );
 
-  return { ok: true, whatsappLink, professionalName: booked.name, timeRange };
+  return {
+    ok: true,
+    whatsappLink,
+    professionalName: booked.name,
+    timeRange,
+    paymentPath: deposit ? `/agendar/pagamento/${appointmentId}` : null,
+  };
 }

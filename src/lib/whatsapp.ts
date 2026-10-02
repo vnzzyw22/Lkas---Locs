@@ -46,3 +46,59 @@ export function buildBookingMessage({
 
   return lines.join("\n");
 }
+
+interface PixProofMessageParams {
+  clientName: string;
+  code: string;
+  serviceName: string;
+  professionalName?: string | null;
+  hairLengthLabel?: string;
+  dateLabel: string;
+  timeLabel: string;
+  durationLabel: string;
+  servicePriceLabel: string;
+  depositLabel: string;
+}
+
+// Mensagem do "Já fiz o Pix": monta só com dados reais do agendamento. Não é
+// enviada pelo sistema — abre no WhatsApp do cliente, que anexa o comprovante
+// e decide quando mandar.
+export function buildPixProofMessage({
+  clientName,
+  code,
+  serviceName,
+  professionalName,
+  hairLengthLabel,
+  dateLabel,
+  timeLabel,
+  durationLabel,
+  servicePriceLabel,
+  depositLabel,
+}: PixProofMessageParams) {
+  const lines = [
+    "Olá! Acabei de realizar o Pix referente ao meu agendamento.",
+    "",
+    "*Meu agendamento:*",
+    "",
+    `Cliente: ${clientName}`,
+    `Serviço: ${serviceName}`,
+  ];
+
+  if (professionalName) lines.push(`Profissional: ${professionalName}`);
+  if (hairLengthLabel) lines.push(`Tamanho: ${hairLengthLabel}`);
+
+  lines.push(
+    `Data: ${dateLabel}`,
+    `Horário: ${timeLabel}`,
+    `Duração: ${durationLabel}`,
+    `Valor do serviço: ${servicePriceLabel}`,
+    `Sinal: ${depositLabel}`,
+    `Código: ${code}`,
+    "",
+    "Estou enviando o comprovante do Pix em seguida.",
+    "",
+    "_Anexe o comprovante do Pix antes de enviar esta mensagem._",
+  );
+
+  return lines.join("\n");
+}

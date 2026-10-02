@@ -1085,6 +1085,52 @@ antes de mexer nisso de novo.
       servindo a fonte do projeto (`src/app/fonts/unbounded-latin.woff2`
       via `next/font/local`, mesmos pesos 500/700/900, mesmo arquivo que o
       Google servia). Comparação pixel a pixel antes/depois: idêntico.
+- **Sinal via Pix manual** (2026-10-02). Sem gateway, sem API, sem webhook, sem
+  QR dinâmico: o cliente paga na chave Pix da loja, avisa pelo WhatsApp e a equipe
+  confirma à mão. **Migration aplicada em produção em 2026-10-02** (SQL Editor, com insert em
+  `schema_migrations`); sinal nasce desligado até o Lucas configurar valor + chave Pix.
+  - **Banco** (`supabase/migrations/20261002120000_sinal_pix_manual.sql`, rollback em
+    `supabase/rollbacks/`): `business_settings` ganhou `deposit_amount` (0 = sinal
+    desligado), `pix_key`, `deposit_hold_minutes` (padrão 15). `appointments` ganhou
+    `payment_status` (`not_required` | `awaiting_payment` | `awaiting_confirmation` |
+    `confirmed` | `expired`), `deposit_amount`, `reservation_expires_at`,
+    `payment_claimed_at`, `payment_confirmed_at`, `payment_confirmed_by` (e-mail do admin).
+    O status do agendamento (pending/confirmed/cancelled) continua mandando na agenda e
+    na constraint de conflito; `payment_status` só descreve o sinal.
+  - **Valor e prazo nunca vêm do navegador:** o trigger `appointments_apply_deposit`
+    sobrescreve valor/prazo a partir de `business_settings` (anon insere direto pela
+    API) e a policy de insert do anon só aceita `status='pending'` com
+    `payment_status` em `not_required`/`awaiting_payment` — nunca "pago".
+  - **Reserva temporária sem cron:** a constraint `appointments_no_overlap` não pode
+    depender de `now()`, então `release_expired_reservations()` cancela (`cancelled` +
+    `expired`) reservas vencidas. É chamada na leitura de disponibilidade, nas
+    consultas do painel, ao consultar o pagamento e dentro do trigger de insert.
+  - **Cliente sem SELECT:** `get_booking_payment(uuid)` e `claim_booking_payment(uuid)`
+    (security definer) são o único acesso público; o UUID aleatório do agendamento é o
+    "link privado" da tela `/agendar/pagamento/[id]`. "Já fiz o Pix" só vira
+    `awaiting_confirmation` — **nunca `confirmed`**. Quem pagou depois do prazo recupera
+    o horário se ele ainda estiver livre (senão `slot_taken`).
+  - **Fluxo:** `createAppointment` devolve `paymentPath`; `booking-form.tsx` redireciona
+    pra `/agendar/pagamento/[id]` (`payment-panel.tsx`: contagem regressiva calculada
+    a partir dos segundos do servidor, 3 passos, copiar chave, WhatsApp com mensagem de
+    `buildPixProofMessage` — dados reais do banco + código curto do agendamento).
+    O sinal só liga com valor > 0 **e** chave Pix **e** WhatsApp configurados
+    (`getDepositConfig` em `src/lib/deposit.ts`); senão o fluxo antigo segue idêntico.
+  - **Painel:** nova página Pagamentos (fila: comprovante enviado / aguardando Pix /
+    reservas expiradas; Confirmar pagamento e Recusar/cancelar), contador no menu e
+    banner no Dashboard, detalhe da Agenda mostra sinal e quem conferiu, Configurações
+    tem valor/chave/tempo. Confirmar grava data/hora e e-mail do admin.
+  - **Testes (sem tocar produção):** Postgres 17 + PostgREST 16 + gateway Supabase falso
+    (scratchpad da sessão) com as migrations reais; SQL como `anon`/`authenticated`
+    (RLS, trigger, expiração, claim, 23P01) e E2E Playwright contra `next build`
+    de produção local, mobile 390px: 31/32 (o 32º era asserção de caixa-alta do teste,
+    não do app). Não testado pela UI: o botão "Recusar / cancelar".
+  - ⚠️ **Ordem de deploy:** aplicar a migration no Supabase **antes** do deploy (o
+    código novo lê as colunas novas e quebraria `/agendar` e o painel sem ela). O sinal
+    nasce desligado (`deposit_amount = 0`) — o Lucas liga em Configurações.
+  - **Decisões:** reserva expirada vira `cancelled` (some da agenda) em vez de ficar
+    pendente; o botão "Já fiz o Pix" **não** estende o prazo da reserva (a equipe confere
+    e pode reativar). Código do agendamento = 8 primeiros caracteres do UUID.
 - **Fase 7 — Documentação do processo de reuso para o próximo profissional.**
 
 ## Serviços iniciais (placeholder de preço/duração)
@@ -1094,7 +1140,8 @@ Twists. Preço e duração devem ser 100% editáveis pelo painel — nunca hardc
 
 ## Regras de negócio a lembrar
 
-- Sem pagamento antecipado no MVP.
+- Sinal via Pix **manual** (opcional, ligado em Configurações): sem gateway/API; a equipe
+  confere o Pix e confirma no painel. Com o valor em 0, não há pagamento antecipado.
 - Cliente não cancela pelo sistema — só o proprietário, pelo painel.
 - WhatsApp: gerar mensagem pré-preenchida (nome, serviço, data, horário,
   observação). Sem integração de API complexa por enquanto; deixar a arquitetura

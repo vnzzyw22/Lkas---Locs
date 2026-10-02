@@ -16,6 +16,10 @@ export interface BusinessSettings {
   instagram: string | null;
   address: string | null;
   business_hours: BusinessHours;
+  // Sinal via Pix manual. deposit_amount = 0 desliga o sinal (fluxo antigo).
+  deposit_amount: number;
+  pix_key: string | null;
+  deposit_hold_minutes: number;
 }
 
 export interface HairDuration {
@@ -69,6 +73,14 @@ export interface AdminGalleryPhoto extends GalleryPhoto {
 
 export type AppointmentStatus = "pending" | "confirmed" | "cancelled";
 
+// Estado do sinal (ver supabase/migrations/20261002120000_sinal_pix_manual.sql).
+export type PaymentStatus =
+  | "not_required"
+  | "awaiting_payment"
+  | "awaiting_confirmation"
+  | "confirmed"
+  | "expired";
+
 export interface AdminAppointment {
   id: string;
   starts_at: string;
@@ -76,6 +88,12 @@ export interface AdminAppointment {
   status: AppointmentStatus;
   notes: string | null;
   hair_length: HairLength | null;
+  payment_status: PaymentStatus;
+  deposit_amount: number | null;
+  reservation_expires_at: string | null;
+  payment_claimed_at: string | null;
+  payment_confirmed_at: string | null;
+  payment_confirmed_by: string | null;
   client: { id: string; name: string; whatsapp: string | null } | null;
   service: { id: string; name: string; price: number } | null;
   professional: { id: string; name: string } | null;

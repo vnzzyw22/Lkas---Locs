@@ -25,6 +25,15 @@ export function SettingsForm({ business }: SettingsFormProps) {
   const [whatsapp, setWhatsapp] = useState(business.whatsapp ?? "");
   const [instagram, setInstagram] = useState(business.instagram ?? "");
   const [address, setAddress] = useState(business.address ?? "");
+  const [depositAmount, setDepositAmount] = useState(
+    business.deposit_amount > 0
+      ? business.deposit_amount.toFixed(2).replace(".", ",")
+      : "",
+  );
+  const [pixKey, setPixKey] = useState(business.pix_key ?? "");
+  const [holdMinutes, setHoldMinutes] = useState(
+    String(business.deposit_hold_minutes),
+  );
   const [hours, setHours] = useState<HoursState>(
     toHoursState(business.business_hours),
   );
@@ -49,6 +58,9 @@ export function SettingsForm({ business }: SettingsFormProps) {
       whatsapp,
       instagram,
       address,
+      depositAmount,
+      pixKey,
+      depositHoldMinutes: holdMinutes,
       businessHours: toBusinessHours(hours),
     });
 
@@ -128,6 +140,72 @@ export function SettingsForm({ business }: SettingsFormProps) {
           }}
           className={fieldClass}
         />
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div>
+          <span className={sectionTitleClass}>Sinal via Pix</span>
+          <p className="mt-1 text-xs text-white/50">
+            O cliente paga o sinal na chave abaixo e manda o comprovante pelo
+            WhatsApp; você confirma em Pagamentos. Deixe o valor vazio para
+            desligar o sinal (o agendamento volta a ser só pendente até você
+            confirmar).
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="deposit" className={labelClass}>
+            Valor do sinal (R$)
+          </label>
+          <input
+            id="deposit"
+            type="text"
+            inputMode="decimal"
+            placeholder="30,00"
+            value={depositAmount}
+            onChange={(e) => {
+              setDepositAmount(e.target.value);
+              setSaved(false);
+            }}
+            className={fieldClass}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="pixKey" className={labelClass}>
+            Chave Pix (aparece para o cliente)
+          </label>
+          <input
+            id="pixKey"
+            type="text"
+            autoComplete="off"
+            placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
+            value={pixKey}
+            onChange={(e) => {
+              setPixKey(e.target.value);
+              setSaved(false);
+            }}
+            className={fieldClass}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="holdMinutes" className={labelClass}>
+            Tempo da reserva enquanto o cliente paga (minutos)
+          </label>
+          <input
+            id="holdMinutes"
+            type="number"
+            min={5}
+            max={240}
+            value={holdMinutes}
+            onChange={(e) => {
+              setHoldMinutes(e.target.value);
+              setSaved(false);
+            }}
+            className={fieldClass}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-3">
