@@ -100,7 +100,7 @@ export function Hero({ business, photos }: HeroProps) {
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-20 mx-auto flex min-h-[74svh] max-w-[1500px] flex-col px-6 pt-10 pb-14 sm:min-h-[78svh] sm:px-10 sm:pt-12 lg:px-16"
+        className="relative z-20 mx-auto flex min-h-[74svh] max-w-[1500px] flex-col px-6 pt-10 pb-14 sm:min-h-[78svh] sm:px-10 sm:pt-12 lg:px-16 min-[1700px]:max-w-none min-[1700px]:px-[6vw]"
       >
         <div className="relative">
           <motion.p
